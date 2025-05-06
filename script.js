@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Appointment data
     let appointments = [];
+    let tests = [];
+    let prescriptions = [];
+    let reports = [];
     
     // API function to fetch appointments
     async function fetchAppointments() {
