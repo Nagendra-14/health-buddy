@@ -50,14 +50,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let reports = [];
     
     // API function to fetch appointments
-    async function fetchAppointments() {
+    async function fetchAppointments(doctorId = null, patientId = null) {
         try {
-            const response = await fetch('/api/appointments');
+            let url = '/api/appointments';
+            // Add query parameters if provided
+            if (doctorId) {
+                url += `?doctorId=${doctorId}`;
+            } else if (patientId) {
+                url += `?patientId=${patientId}`;
+            }
+            
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch appointments');
             }
             const data = await response.json();
-            appointments = data;
             return data;
         } catch (error) {
             console.error('Error fetching appointments:', error);
@@ -536,102 +543,130 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===============================================================
     
     // Load doctor-specific data
-    function loadDoctorData() {
-        // Load patients dropdown for tests and prescriptions
-        const testPatientSelect = document.getElementById('testPatient');
-        const prescriptionPatientSelect = document.getElementById('prescriptionPatient');
-        
-        // Clear existing options
-        testPatientSelect.innerHTML = '<option value="">Select Patient</option>';
-        prescriptionPatientSelect.innerHTML = '<option value="">Select Patient</option>';
-        
-        // Add patient options
-        users.patients.forEach(patient => {
-            const option = document.createElement('option');
-            option.value = patient.id;
-            option.textContent = patient.name;
+    async function loadDoctorData() {
+        try {
+            // Fetch patients from API
+            const allPatients = await fetchPatients();
             
-            testPatientSelect.appendChild(option.cloneNode(true));
-            prescriptionPatientSelect.appendChild(option);
-        });
-        
-        // Set default dates
-        const today = new Date().toISOString().split('T')[0];
-        const threeMonthsLater = new Date();
-        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-        
-        document.getElementById('testDate').value = today;
-        document.getElementById('validFrom').value = today;
-        document.getElementById('validUntil').value = threeMonthsLater.toISOString().split('T')[0];
-        
-        // Load appointments for dashboard
-        loadDoctorAppointments();
-        
-        // Load recent tests
-        loadRecentTests();
-        
-        // Load prescriptions
-        loadPrescriptions();
-        
-        // Load patient reports
-        loadReports('doctorReportsGrid', reports);
+            // If doctor has specific patients, filter them
+            let doctorPatients = allPatients;
+            if (currentUser && currentUser.type === 'doctor') {
+                doctorPatients = allPatients.filter(p => p.doctorId === currentUser.id);
+            }
+            
+            // Load patients dropdown for tests and prescriptions
+            const testPatientSelect = document.getElementById('testPatient');
+            const prescriptionPatientSelect = document.getElementById('prescriptionPatient');
+            
+            // Clear existing options
+            testPatientSelect.innerHTML = '<option value="">Select Patient</option>';
+            prescriptionPatientSelect.innerHTML = '<option value="">Select Patient</option>';
+            
+            // Add patient options
+            doctorPatients.forEach(patient => {
+                const option = document.createElement('option');
+                option.value = patient.id;
+                option.textContent = patient.name;
+                
+                testPatientSelect.appendChild(option.cloneNode(true));
+                prescriptionPatientSelect.appendChild(option);
+            });
+            
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            const threeMonthsLater = new Date();
+            threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+            
+            document.getElementById('testDate').value = today;
+            document.getElementById('validFrom').value = today;
+            document.getElementById('validUntil').value = threeMonthsLater.toISOString().split('T')[0];
+            
+            // Fetch appointments data
+            appointments = await fetchAppointments();
+            
+            // Load appointments for dashboard
+            loadDoctorAppointments();
+            
+            // Load recent tests
+            await loadRecentTests();
+            
+            // Load prescriptions
+            await loadPrescriptions();
+            
+            // Load patient reports
+            await loadReports('doctorReportsGrid');
+        } catch (error) {
+            console.error('Error loading doctor data:', error);
+            showToast('Error loading doctor data. Please try again.', 'error');
+        }
     }
     
     // Load patient-specific data
-    function loadPatientData() {
-        // Get patient-specific appointments
-        const patientAppointments = appointments.filter(app => app.patientId === currentUser.id);
-        
-        // Load appointments for patient dashboard
-        const dashboardAppsList = document.getElementById('patientAppointmentsList');
-        dashboardAppsList.innerHTML = '';
-        
-        if (patientAppointments.length > 0) {
-            // Show only upcoming appointments for dashboard
-            const upcomingAppointments = patientAppointments
-                .filter(app => new Date(app.date) >= new Date())
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .slice(0, 3);
-            
-            upcomingAppointments.forEach(app => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${app.doctorName}</td>
-                    <td>${formatDate(app.date)}</td>
-                    <td>${app.time}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                `;
-                dashboardAppsList.appendChild(tr);
-            });
-        } else {
-            dashboardAppsList.innerHTML = '<tr><td colspan="4" class="text-center">No upcoming appointments</td></tr>';
+    async function loadPatientData() {
+        try {
+            // Fetch patient-specific appointments
+            if (currentUser && currentUser.id) {
+                // Fetch fresh appointments
+                const patientAppointmentsData = await fetchAppointments(null, currentUser.id);
+                appointments = patientAppointmentsData;
+                
+                // Load appointments for patient dashboard
+                const dashboardAppsList = document.getElementById('patientAppointmentsList');
+                dashboardAppsList.innerHTML = '';
+                
+                if (appointments.length > 0) {
+                    // Show only upcoming appointments for dashboard
+                    const upcomingAppointments = appointments
+                        .filter(app => new Date(app.date) >= new Date())
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .slice(0, 3);
+                    
+                    upcomingAppointments.forEach(app => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${app.doctorName}</td>
+                            <td>${formatDate(app.date)}</td>
+                            <td>${app.time}</td>
+                            <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
+                        `;
+                        dashboardAppsList.appendChild(tr);
+                    });
+                } else {
+                    dashboardAppsList.innerHTML = '<tr><td colspan="4" class="text-center">No upcoming appointments</td></tr>';
+                }
+                
+                // Load patient appointments table
+                const patientAppsTable = document.getElementById('patientAppointmentsTable');
+                patientAppsTable.innerHTML = '';
+                
+                if (appointments.length > 0) {
+                    appointments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    appointments.forEach(app => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${app.doctorName}</td>
+                            <td>${formatDate(app.date)}</td>
+                            <td>${app.time}</td>
+                            <td>${app.purpose}</td>
+                            <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
+                        `;
+                        patientAppsTable.appendChild(tr);
+                    });
+                } else {
+                    patientAppsTable.innerHTML = '<tr><td colspan="5" class="text-center">No appointments found</td></tr>';
+                }
+                
+                // Load patient reports from API
+                await loadReports('patientReportsGrid');
+                
+                // Get prescriptions
+                await loadPrescriptions();
+            }
+        } catch (error) {
+            console.error('Error loading patient data:', error);
+            showToast('Error loading patient data. Please try again.', 'error');
         }
-        
-        // Load patient appointments table
-        const patientAppsTable = document.getElementById('patientAppointmentsTable');
-        patientAppsTable.innerHTML = '';
-        
-        if (patientAppointments.length > 0) {
-            patientAppointments.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            patientAppointments.forEach(app => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${app.doctorName}</td>
-                    <td>${formatDate(app.date)}</td>
-                    <td>${app.time}</td>
-                    <td>${app.purpose}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                `;
-                patientAppsTable.appendChild(tr);
-            });
-        } else {
-            patientAppsTable.innerHTML = '<tr><td colspan="5" class="text-center">No appointments found</td></tr>';
-        }
-        
-        // Load patient reports
-        const patientReports = reports.filter(report => report.patientId === currentUser.id);
-        loadReports('patientReportsGrid', patientReports);
     }
     
     // Load doctor appointments
@@ -691,140 +726,300 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // API function to fetch test types
+    async function fetchTestTypes() {
+        try {
+            const response = await fetch('/api/tests');
+            if (!response.ok) {
+                throw new Error('Failed to fetch test types');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching test types:', error);
+            showToast('Error loading test types. Please try again.', 'error');
+            return [];
+        }
+    }
+    
     // Load recent tests
-    function loadRecentTests() {
+    async function loadRecentTests() {
         const recentTestsTable = document.getElementById('recentTestsTable');
         recentTestsTable.innerHTML = '';
         
-        if (tests.length > 0) {
-            // Sort by date, most recent first
-            const sortedTests = [...tests].sort((a, b) => new Date(b.date) - new Date(a.date));
+        try {
+            // Temporarily populate with mock data for demonstration
+            // In a real app, this would be fetched from the server
+            tests = [
+                {
+                    id: 'RT001',
+                    patientId: 'P001',
+                    patientName: 'John Smith',
+                    testType: 'Complete Blood Count',
+                    date: 'May 1, 2025',
+                    status: 'Completed'
+                },
+                {
+                    id: 'RT002',
+                    patientId: 'P002',
+                    patientName: 'Maria Garcia',
+                    testType: 'Lipid Panel',
+                    date: 'May 2, 2025',
+                    status: 'Pending'
+                },
+                {
+                    id: 'RT003',
+                    patientId: 'P005',
+                    patientName: 'Michael Brown',
+                    testType: 'MRI - Knee',
+                    date: 'Apr 20, 2025',
+                    status: 'Completed'
+                },
+                {
+                    id: 'RT004',
+                    patientId: 'P003',
+                    patientName: 'David Johnson',
+                    testType: 'Urinalysis',
+                    date: 'May 3, 2025',
+                    status: 'In Progress'
+                }
+            ];
             
-            sortedTests.forEach(test => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${test.patientName}</td>
-                    <td>${test.testType}</td>
-                    <td>${formatDate(test.date)}</td>
-                    <td><span class="status-badge status-${test.status.toLowerCase().replace(' ', '-')}">${test.status}</span></td>
-                `;
-                recentTestsTable.appendChild(tr);
-            });
-        } else {
-            recentTestsTable.innerHTML = '<tr><td colspan="4" class="text-center">No recent tests</td></tr>';
+            // Also populate the test type dropdown
+            const testTypeSelect = document.getElementById('testType');
+            if (testTypeSelect) {
+                testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
+                
+                // Fetch test types from API
+                const testTypes = await fetchTestTypes();
+                
+                testTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type.id;
+                    option.textContent = type.name;
+                    testTypeSelect.appendChild(option);
+                });
+            }
+            
+            if (tests.length > 0) {
+                // Sort by date, most recent first
+                const sortedTests = [...tests].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                sortedTests.forEach(test => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${test.patientName}</td>
+                        <td>${test.testType}</td>
+                        <td>${formatDate(test.date)}</td>
+                        <td><span class="status-badge status-${test.status.toLowerCase().replace(' ', '-')}">${test.status}</span></td>
+                    `;
+                    recentTestsTable.appendChild(tr);
+                });
+            } else {
+                recentTestsTable.innerHTML = '<tr><td colspan="4" class="text-center">No recent tests</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading recent tests:', error);
+            recentTestsTable.innerHTML = '<tr><td colspan="4" class="text-center">Error loading test data</td></tr>';
+        }
+    }
+    
+    // Fetch prescriptions data
+    async function fetchPrescriptions(doctorId = null, patientId = null) {
+        try {
+            let url = '/api/prescriptions';
+            if (doctorId) {
+                url += `?doctorId=${doctorId}`;
+            } else if (patientId) {
+                url += `?patientId=${patientId}`;
+            }
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch prescriptions');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching prescriptions:', error);
+            showToast('Error loading prescriptions. Please try again.', 'error');
+            return [];
         }
     }
     
     // Load prescriptions
-    function loadPrescriptions() {
+    async function loadPrescriptions() {
         const prescriptionsTable = document.getElementById('recentPrescriptionsTable');
         prescriptionsTable.innerHTML = '';
         
-        if (prescriptions.length > 0) {
-            // Sort by date, most recent first
-            const sortedPrescriptions = [...prescriptions].sort((a, b) => 
-                new Date(b.validFrom) - new Date(a.validFrom)
-            );
+        try {
+            // If user is a doctor, load prescriptions they created
+            // If user is a patient, load their prescriptions
+            if (currentUser) {
+                const paramKey = currentUser.type === 'doctor' ? 'doctorId' : 'patientId';
+                const prescriptionsData = await fetchPrescriptions(
+                    currentUser.type === 'doctor' ? currentUser.id : null,
+                    currentUser.type === 'patient' ? currentUser.id : null
+                );
+                prescriptions = prescriptionsData;
+            }
             
-            sortedPrescriptions.forEach(prescription => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${prescription.patientName}</td>
-                    <td>${truncateText(prescription.details, 50)}</td>
-                    <td>${formatDate(prescription.validFrom)} to ${formatDate(prescription.validUntil)}</td>
-                    <td>
-                        <div class="table-actions">
-                            <button class="btn-link edit-prescription" data-id="${prescription.id}" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-link" title="Print">
-                                <i class="fas fa-print"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                prescriptionsTable.appendChild(tr);
+            if (prescriptions.length > 0) {
+                // Sort by date, most recent first
+                const sortedPrescriptions = [...prescriptions].sort((a, b) => 
+                    new Date(b.validFrom) - new Date(a.validFrom)
+                );
                 
-                // Add event listener for edit button
-                const editBtn = tr.querySelector('.edit-prescription');
-                editBtn.addEventListener('click', function() {
-                    editPrescription(prescription.id);
+                sortedPrescriptions.forEach(prescription => {
+                    const tr = document.createElement('tr');
+                    // Get medication names
+                    const medicationNames = prescription.medications 
+                        ? prescription.medications.map(med => med.name).join(', ')
+                        : 'No medications listed';
+                        
+                    tr.innerHTML = `
+                        <td>${prescription.patientName}</td>
+                        <td>${truncateText(medicationNames, 50)}</td>
+                        <td>${formatDate(prescription.validFrom)} to ${formatDate(prescription.validUntil)}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn-link edit-prescription" data-id="${prescription.id}" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-link" title="Print">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    prescriptionsTable.appendChild(tr);
+                    
+                    // Add event listener for edit button
+                    const editBtn = tr.querySelector('.edit-prescription');
+                    editBtn.addEventListener('click', function() {
+                        editPrescription(prescription.id);
+                    });
                 });
-            });
-        } else {
-            prescriptionsTable.innerHTML = '<tr><td colspan="4" class="text-center">No prescriptions found</td></tr>';
+            } else {
+                prescriptionsTable.innerHTML = '<tr><td colspan="4" class="text-center">No prescriptions found</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading prescriptions:', error);
+            prescriptionsTable.innerHTML = '<tr><td colspan="4" class="text-center">Error loading prescription data</td></tr>';
+        }
+    }
+    
+    // Fetch reports data
+    async function fetchReportsData(doctorId = null, patientId = null) {
+        try {
+            let url = '/api/reports';
+            if (doctorId) {
+                url += `?doctorId=${doctorId}`;
+            } else if (patientId) {
+                url += `?patientId=${patientId}`;
+            }
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch reports');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            showToast('Error loading reports. Please try again.', 'error');
+            return [];
         }
     }
     
     // Load reports
-    function loadReports(containerId, reportsData) {
+    async function loadReports(containerId, reportsDataParam = null) {
         const reportsContainer = document.getElementById(containerId);
         reportsContainer.innerHTML = '';
         
-        if (reportsData.length > 0) {
-            // Sort by date, most recent first
-            const sortedReports = [...reportsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+        try {
+            let reportsData = reportsDataParam;
             
-            sortedReports.forEach(report => {
-                // Determine CSS class based on category
-                let categoryClass = '';
-                if (report.category.toLowerCase().includes('blood')) {
-                    categoryClass = 'blood';
-                } else if (report.category.toLowerCase().includes('urine')) {
-                    categoryClass = 'urine';
-                } else if (report.category.toLowerCase().includes('imaging')) {
-                    categoryClass = 'imaging';
-                } else {
-                    categoryClass = 'other';
+            // If reports aren't provided, fetch them based on user type
+            if (!reportsData) {
+                if (currentUser) {
+                    if (currentUser.type === 'doctor') {
+                        reportsData = await fetchReportsData(currentUser.id, null);
+                    } else if (currentUser.type === 'patient') {
+                        reportsData = await fetchReportsData(null, currentUser.id);
+                    }
+                    reports = reportsData;
                 }
+            }
+            
+            if (reportsData && reportsData.length > 0) {
+                // Sort by date, most recent first
+                const sortedReports = [...reportsData].sort((a, b) => new Date(b.date) - new Date(a.date));
                 
-                // Determine status class
-                let statusClass = '';
-                if (report.status.toLowerCase() === 'normal') {
-                    statusClass = 'report-result-normal';
-                } else if (report.status.toLowerCase() === 'borderline') {
-                    statusClass = 'report-result-borderline';
-                } else if (report.status.toLowerCase() === 'abnormal') {
-                    statusClass = 'report-result-abnormal';
-                } else {
-                    statusClass = 'report-result-pending';
-                }
-                
-                const reportCard = document.createElement('div');
-                reportCard.className = `report-card report-${categoryClass}`;
-                reportCard.dataset.category = categoryClass;
-                reportCard.innerHTML = `
-                    <div class="report-header">
-                        <h3>${report.name}</h3>
-                        <span class="report-category">${report.category}</span>
-                    </div>
-                    <div class="report-body">
-                        <div class="report-info">
-                            <i class="fas fa-user"></i>
-                            <span>${containerId === 'doctorReportsGrid' ? report.patientName : 'Your Report'}</span>
+                sortedReports.forEach(report => {
+                    // Determine CSS class based on category
+                    let categoryClass = '';
+                    if (report.category.toLowerCase().includes('blood')) {
+                        categoryClass = 'blood';
+                    } else if (report.category.toLowerCase().includes('urine')) {
+                        categoryClass = 'urine';
+                    } else if (report.category.toLowerCase().includes('imaging')) {
+                        categoryClass = 'imaging';
+                    } else if (report.category.toLowerCase().includes('psych')) {
+                        categoryClass = 'imaging'; // Use imaging style for psychological reports
+                    } else {
+                        categoryClass = 'other';
+                    }
+                    
+                    // Determine status class
+                    let statusClass = '';
+                    if (report.status.toLowerCase() === 'normal') {
+                        statusClass = 'report-result-normal';
+                    } else if (report.status.toLowerCase() === 'borderline') {
+                        statusClass = 'report-result-borderline';
+                    } else if (report.status.toLowerCase() === 'abnormal') {
+                        statusClass = 'report-result-abnormal';
+                    } else {
+                        statusClass = 'report-result-pending';
+                    }
+                    
+                    const reportCard = document.createElement('div');
+                    reportCard.className = `report-card report-${categoryClass}`;
+                    reportCard.dataset.category = categoryClass;
+                    reportCard.dataset.reportId = report.id;
+                    reportCard.innerHTML = `
+                        <div class="report-header">
+                            <h3>${report.name}</h3>
+                            <span class="report-category">${report.category}</span>
                         </div>
-                        <div class="report-info">
-                            <i class="fas fa-calendar"></i>
-                            <span>${formatDate(report.date)}</span>
+                        <div class="report-body">
+                            <div class="report-info">
+                                <i class="fas fa-user"></i>
+                                <span>${containerId === 'doctorReportsGrid' ? report.patientName : 'Your Report'}</span>
+                            </div>
+                            <div class="report-info">
+                                <i class="fas fa-calendar"></i>
+                                <span>${formatDate(report.date)}</span>
+                            </div>
+                            <div class="report-info">
+                                <i class="fas fa-user-md"></i>
+                                <span>${report.orderedBy}</span>
+                            </div>
+                            <div class="report-status ${statusClass}">
+                                <strong>${report.status}</strong>
+                            </div>
                         </div>
-                        <div class="report-info">
-                            <i class="fas fa-user-md"></i>
-                            <span>${report.doctorName}</span>
-                        </div>
-                        <div class="report-status ${statusClass}">
-                            <strong>${report.status}</strong>
-                        </div>
-                    </div>
-                `;
-                reportsContainer.appendChild(reportCard);
-                
-                // Add click event to show full report details
-                reportCard.addEventListener('click', function() {
-                    showReportDetails(report);
+                    `;
+                    reportsContainer.appendChild(reportCard);
+                    
+                    // Add click event to show full report details
+                    reportCard.addEventListener('click', function() {
+                        showReportDetails(report);
+                    });
                 });
-            });
-        } else {
-            reportsContainer.innerHTML = '<div class="text-center p-5">No reports found</div>';
+            } else {
+                reportsContainer.innerHTML = '<div class="text-center p-5">No reports found</div>';
+            }
+        } catch (error) {
+            console.error('Error loading reports:', error);
+            reportsContainer.innerHTML = '<div class="text-center p-5">Error loading reports. Please try again.</div>';
         }
     }
     
