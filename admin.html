@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Buddy Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e88e5;
+            --primary-light: #bbdefb;
+            --primary-dark: #1565c0;
+            --secondary: #6c757d;
+            --success: #4caf50;
+            --info: #03a9f4;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --white: #ffffff;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-display: var(--font-sans);
+            
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            --border-radius-sm: 0.25rem;
+            --border-radius: 0.5rem;
+            --border-radius-lg: 1rem;
+            
+            --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            
+            --transition: all 0.3s ease;
+            --transition-fast: all 0.15s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            color: var(--gray-800);
+            background-color: var(--gray-100);
+            padding: var(--spacing-lg);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-900);
+        }
+        
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tab-container {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: var(--primary);
+            padding: var(--spacing-md) var(--spacing-md) 0 var(--spacing-md);
+            overflow-x: auto;
+        }
+        
+        .tab-btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .tab-btn.active {
+            background-color: var(--white);
+            color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: var(--spacing-lg);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: var(--spacing-lg);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: var(--spacing-lg);
+        }
+        
+        .refresh-btn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .refresh-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .data-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table, th, td {
+            border: 1px solid var(--gray-300);
+        }
+        
+        th, td {
+            padding: var(--spacing-md);
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--gray-200);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--gray-100);
+        }
+        
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-right: var(--spacing-md);
+            overflow: hidden;
+        }
+        
+        .avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--gray-600);
+        }
+        
+        .loading i {
+            animation: spin 1s infinite linear;
+            font-size: 2rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: var(--danger);
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--gray-600);
+        }
+        
+        .empty i {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-400);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Health Buddy Admin Dashboard</h1>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="patients">Patients</button>
+                <button class="tab-btn" data-tab="doctors">Doctors</button>
+                <button class="tab-btn" data-tab="pending-doctors">Pending Doctors</button>
+                <button class="tab-btn" data-tab="visits">User Visits</button>
+                <button class="tab-btn" data-tab="appointments">Appointments</button>
+                <button class="tab-btn" data-tab="prescriptions">Prescriptions</button>
+                <button class="tab-btn" data-tab="tests">Tests</button>
+            </div>
+            
+            <!-- Patients Tab -->
+            <div class="tab-content active" id="patients-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Patients List</h3>
+                        <button class="refresh-btn" onclick="loadData('patients')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="patients-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading patients data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Doctors Tab -->
+            <div class="tab-content" id="doctors-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Doctors List</h3>
+                        <button class="refresh-btn" onclick="loadData('doctors')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="doctors-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading doctors data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Doctors Tab -->
+            <div class="tab-content" id="pending-doctors-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Pending Doctors for Verification</h3>
+                        <button class="refresh-btn" onclick="loadData('pending-doctors')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="pending-doctors-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading pending doctors data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Visits Tab -->
+            <div class="tab-content" id="visits-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>User Visits</h3>
+                        <button class="refresh-btn" onclick="loadData('visits')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="visits-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading user visits data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appointments Tab -->
+            <div class="tab-content" id="appointments-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Appointments</h3>
+                        <button class="refresh-btn" onclick="loadData('appointments')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="appointments-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading appointments data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prescriptions Tab -->
+            <div class="tab-content" id="prescriptions-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Prescriptions</h3>
+                        <button class="refresh-btn" onclick="loadData('prescriptions')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="prescriptions-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading prescriptions data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tests Tab -->
+            <div class="tab-content" id="tests-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Tests</h3>
+                        <button class="refresh-btn" onclick="loadData('tests')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="tests-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading tests data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching functionality
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabBtns.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to current tab
+                    btn.classList.add('active');
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Load data for the tab if not already loaded
+                    if (!document.getElementById(`${tabId}-data`).innerHTML.includes('table')) {
+                        loadData(tabId);
+                    }
+                });
+            });
+            
+            // Initial data load for the active tab
+            loadData('patients');
+        });
+        
+        // Load data from API
+        async function loadData(dataType) {
+            const container = document.getElementById(`${dataType}-data`);
+            container.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading ${dataType} data...</p>
+                </div>
+            `;
+            
+            try {
+                let endpoint = '';
+                
+                switch(dataType) {
+                    case 'patients':
+                        endpoint = '/api/patients';
+                        break;
+                    case 'doctors':
+                        endpoint = '/api/doctors';
+                        break;
+                    case 'pending-doctors':
+                        endpoint = '/api/admin/pending-doctors';
+                        break;
+                    case 'visits':
+                        endpoint = '/api/admin/visits';
+                        break;
+                    case 'appointments':
+                        endpoint = '/api/appointments';
+                        break;
+                    case 'prescriptions':
+                        endpoint = '/api/prescriptions';
+                        break;
+                    case 'tests':
+                        endpoint = '/api/tests';
+                        break;
+                    default:
+                        throw new Error('Invalid data type');
+                }
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    throw new Error(`Error fetching data: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (dataType === 'visits') {
+                    renderVisits(data);
+                } else {
+                    renderTable(data, dataType);
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error">
+                        <p><i class="fas fa-exclamation-circle"></i> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Render data table
+        function renderTable(data, dataType) {
+            const container = document.getElementById(`${dataType}-data`);
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty">
+                        <i class="fas fa-inbox"></i>
+                        <p>No ${dataType} found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const keys = Object.keys(data[0]);
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            ${keys.map(key => `<th>${formatHeader(key)}</th>`).join('')}
+                            ${dataType === 'pending-doctors' ? '<th>Actions</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach(item => {
+                tableHTML += `<tr>`;
+                
+                keys.forEach(key => {
+                    let cellValue = '';
+                    
+                    if (key === 'password') {
+                        cellValue = '********';
+                    } else if (key === 'avatarUrl' || key === 'avatar') {
+                        cellValue = `
+                            <div class="avatar-circle">
+                                <img src="${item[key]}" alt="Avatar">
+                            </div>
+                        `;
+                    } else if (key === 'verified') {
+                        cellValue = item[key] ? 
+                            '<span class="badge badge-success">Verified</span>' : 
+                            '<span class="badge badge-warning">Pending</span>';
+                    } else if (key === 'status') {
+                        let badgeClass = 'badge-info';
+                        if (item[key] === 'Completed') badgeClass = 'badge-success';
+                        if (item[key] === 'Scheduled') badgeClass = 'badge-warning';
+                        if (item[key] === 'Cancelled') badgeClass = 'badge-danger';
+                        
+                        cellValue = `<span class="badge ${badgeClass}">${item[key]}</span>`;
+                    } else if (key === 'medications' && Array.isArray(item[key])) {
+                        cellValue = item[key].map(med => `${med.name} (${med.dosage})`).join('<br>');
+                    } else if (typeof item[key] === 'object' && item[key] !== null) {
+                        cellValue = JSON.stringify(item[key]);
+                    } else {
+                        cellValue = item[key] || '-';
+                    }
+                    
+                    tableHTML += `<td>${cellValue}</td>`;
+                });
+                
+                if (dataType === 'pending-doctors') {
+                    tableHTML += `
+                        <td>
+                            <button class="refresh-btn" onclick="verifyDoctor('${item.id}')">
+                                <i class="fas fa-check"></i> Verify
+                            </button>
+                        </td>
+                    `;
+                }
+                
+                tableHTML += `</tr>`;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+        
+        // Format header text
+        function formatHeader(key) {
+            // Convert camelCase to Title Case with Spaces
+            return key
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+        }
+        
+        // Render user visits data
+        function renderVisits(data) {
+            const container = document.getElementById('visits-data');
+            
+            if (!data || !data.visits || data.visits.length === 0) {
+                container.innerHTML = `
+                    <div class="empty">
+                        <i class="fas fa-inbox"></i>
+                        <p>No user visits found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let statsHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4>Visit Statistics</h4>
+                    <p><strong>Total Visits:</strong> ${data.totalVisits}</p>
+                    <h5 style="margin-top: 15px;">Visits by User:</h5>
+                    <ul>
+            `;
+            
+            for (const userId in data.visitsByUser) {
+                statsHTML += `<li><strong>User ${userId}:</strong> ${data.visitsByUser[userId]} visits</li>`;
+            }
+            
+            statsHTML += `
+                    </ul>
+                </div>
+            `;
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.visits.forEach(visit => {
+                const date = new Date(visit.timestamp);
+                const formattedDate = date.toLocaleString();
+                
+                tableHTML += `
+                    <tr>
+                        <td>${visit.userId}</td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = statsHTML + tableHTML;
+        }
+        
+        // Verify a doctor
+        async function verifyDoctor(doctorId) {
+            try {
+                const response = await fetch(`/api/admin/verify-doctor/${doctorId}`, {
+                    method: 'PUT'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to verify doctor');
+                }
+                
+                // Reload both pending doctors and doctors data
+                loadData('pending-doctors');
+                loadData('doctors');
+                
+                alert('Doctor verified successfully!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

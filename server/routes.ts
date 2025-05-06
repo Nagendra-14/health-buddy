@@ -22,6 +22,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.resolve(__dirname, '../script.js'));
   });
   
+  // Admin dashboard for viewing all data
+  app.get('/admin', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../admin.html'));
+  });
+  
   // API routes for Health Buddy application
   
   // Define shared data structures for users
