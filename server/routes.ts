@@ -24,7 +24,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Admin dashboard for viewing all data
   app.get('/admin', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../admin.html'));
+    // Check for admin auth in query params or session
+    const adminAuth = req.query.key;
+    const adminKey = 'health-buddy-2025'; // Simple admin key
+    
+    if (adminAuth === adminKey) {
+      // Set a cookie for future access
+      res.cookie('admin_auth', adminKey, { 
+        httpOnly: true, 
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      res.sendFile(path.resolve(__dirname, '../admin.html'));
+    } else if (req.cookies && req.cookies.admin_auth === adminKey) {
+      // Already authenticated via cookie
+      res.sendFile(path.resolve(__dirname, '../admin.html'));
+    } else {
+      // Show login page
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Admin Login</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                :root {
+                    --primary: #1e88e5;
+                    --primary-light: #bbdefb;
+                    --primary-dark: #1565c0;
+                    --gray-100: #f8f9fa;
+                    --gray-800: #343a40;
+                    --white: #ffffff;
+                    --spacing-md: 1rem;
+                    --spacing-lg: 1.5rem;
+                    --spacing-xl: 2rem;
+                    --border-radius: 0.5rem;
+                    --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                }
+                body {
+                    font-family: 'Inter', sans-serif;
+                    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+                    height: 100vh;
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .login-container {
+                    background-color: var(--white);
+                    border-radius: var(--border-radius);
+                    box-shadow: var(--shadow-lg);
+                    padding: var(--spacing-xl);
+                    width: 100%;
+                    max-width: 400px;
+                }
+                h1 {
+                    text-align: center;
+                    margin-bottom: var(--spacing-lg);
+                    color: var(--gray-800);
+                }
+                .form-group {
+                    margin-bottom: var(--spacing-lg);
+                }
+                label {
+                    display: block;
+                    margin-bottom: var(--spacing-md);
+                    font-weight: 500;
+                }
+                input {
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 1px solid #ddd;
+                    border-radius: 0.25rem;
+                    font-size: 1rem;
+                }
+                button {
+                    width: 100%;
+                    padding: 0.75rem;
+                    background-color: var(--primary);
+                    color: var(--white);
+                    border: none;
+                    border-radius: 0.25rem;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                button:hover {
+                    background-color: var(--primary-dark);
+                }
+                .error {
+                    color: #dc3545;
+                    margin-top: var(--spacing-md);
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="login-container">
+                <h1>Admin Login</h1>
+                <form id="adminForm">
+                    <div class="form-group">
+                        <label for="adminKey">Admin Key</label>
+                        <input type="password" id="adminKey" name="key" placeholder="Enter your admin key" required>
+                    </div>
+                    <button type="submit">Login</button>
+                    ${req.query.error ? '<p class="error">Invalid admin key. Please try again.</p>' : ''}
+                </form>
+            </div>
+            <script>
+                document.getElementById('adminForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const key = document.getElementById('adminKey').value;
+                    window.location.href = '/admin?key=' + encodeURIComponent(key);
+                });
+            </script>
+        </body>
+        </html>
+      `);
+    }
   });
   
   // API routes for Health Buddy application
