@@ -174,7 +174,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   let userVisits: { userId: string; timestamp: string; }[] = [];
   
   // Store pending doctor registrations for admin verification
-  let pendingDoctors: any[] = [];
+  let pendingDoctors: any[] = [
+    {
+      id: 'D003',
+      name: 'Dr. Nagendra',
+      username: 'nagendra',
+      password: 'nagendra2025',
+      specialty: 'Cardiology',
+      contact: '555-9999',
+      email: 'nagendra@example.com',
+      license: 'MED-12345',
+      availability: 'Mon-Fri, 8AM-4PM',
+      verified: false, 
+      avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+    }
+  ];
   
   // Define all doctors
   const allDoctors = [
@@ -204,6 +218,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Define all patients
   const allPatients = [
+    // New test patient added
+    { 
+      id: 'P011',
+      name: 'Test User',
+      username: 'testuser',
+      password: 'password123',
+      doctorId: 'D001',
+      age: 25,
+      gender: 'Male',
+      contact: '555-8888',
+      email: 'test@example.com',
+      medicalHistory: 'None',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+    },
     { 
       id: 'P001', 
       name: 'John Smith', 

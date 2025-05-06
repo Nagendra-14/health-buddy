@@ -553,14 +553,22 @@
                     <tbody>
             `;
             
-            data.forEach(item => {
+            data.forEach((item, index) => {
                 tableHTML += `<tr>`;
                 
                 keys.forEach(key => {
                     let cellValue = '';
                     
                     if (key === 'password') {
-                        cellValue = '********';
+                        const passwordId = `password-${dataType}-${index}`;
+                        cellValue = `
+                            <div style="position: relative; display: inline-block; min-width: 150px;">
+                                <input type="password" id="${passwordId}" value="${item[key]}" readonly style="border: none; background: transparent; width: 100%;">
+                                <button type="button" class="toggle-password-btn" data-target="${passwordId}" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                                    <i class="fas fa-eye" style="color: #777;"></i>
+                                </button>
+                            </div>
+                        `;
                     } else if (key === 'avatarUrl' || key === 'avatar') {
                         cellValue = `
                             <div class="avatar-circle">
@@ -608,6 +616,25 @@
             `;
             
             container.innerHTML = tableHTML;
+            
+            // Set up password toggle buttons after rendering the table
+            container.querySelectorAll('.toggle-password-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const passwordInput = document.getElementById(targetId);
+                    const icon = this.querySelector('i');
+                    
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
         }
         
         // Format header text
