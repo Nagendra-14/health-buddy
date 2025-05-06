@@ -126,7 +126,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <form id="adminForm">
                     <div class="form-group">
                         <label for="adminKey">Admin Key</label>
-                        <input type="password" id="adminKey" name="key" placeholder="Enter your admin key" required>
+                        <div style="position: relative;">
+                            <input type="password" id="adminKey" name="key" placeholder="Enter your admin key" required>
+                            <button type="button" id="togglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                                <i class="fas fa-eye" style="color: #777;"></i>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit">Login</button>
                     ${req.query.error ? '<p class="error">Invalid admin key. Please try again.</p>' : ''}
@@ -137,6 +142,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     e.preventDefault();
                     const key = document.getElementById('adminKey').value;
                     window.location.href = '/admin?key=' + encodeURIComponent(key);
+                });
+                
+                // Toggle password visibility
+                document.getElementById('togglePassword').addEventListener('click', function() {
+                    const passwordInput = document.getElementById('adminKey');
+                    const icon = this.querySelector('i');
+                    
+                    // Toggle the input type between password and text
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
                 });
             </script>
         </body>
