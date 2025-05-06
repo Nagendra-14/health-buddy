@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Buddy - Doctor & Patient Dashboard</title>
+    <meta name="description" content="Health Buddy - A comprehensive dashboard for doctors and patients to manage healthcare information">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-logo">
+                <i class="fas fa-heartbeat"></i>
+                <h1>Health Buddy</h1>
+            </div>
+            <div class="login-form-container">
+                <h2>Sign In</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userType">I am a:</label>
+                        <select id="userType" class="form-control" required>
+                            <option value="doctor">Doctor</option>
+                            <option value="patient">Patient</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span class="logo-text">Health Buddy</span>
+                </div>
+                <button id="toggleSidebar" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="user-info">
+                <div class="avatar">
+                    <i class="fas fa-user-md doctor-avatar"></i>
+                    <i class="fas fa-user patient-avatar"></i>
+                </div>
+                <div class="user-details">
+                    <h3 id="userName">User Name</h3>
+                    <p id="userRole">Role</p>
+                </div>
+            </div>
+            <nav>
+                <ul id="navLinks">
+                    <!-- Navigation links will be added dynamically with JavaScript -->
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="main-content">
+            <header class="header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="user-actions">
+                    <button id="logoutBtn" class="btn btn-outline">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Pages -->
+            <div id="contentPages" class="content-container">
+                <!-- Doctor Dashboard -->
+                <div id="doctorDashboard" class="content-page">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="stat-details">
+                                <h3>Today's Appointments</h3>
+                                <p class="stat-value">8</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-flask"></i></div>
+                            <div class="stat-details">
+                                <h3>Pending Tests</h3>
+                                <p class="stat-value">5</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-file-medical"></i></div>
+                            <div class="stat-details">
+                                <h3>Recent Reports</h3>
+                                <p class="stat-value">12</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-recent">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Upcoming Appointments</h2>
+                                <a href="#" class="btn-link" data-page="doctorAppointments">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Time</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboardAppointmentsList">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Dashboard -->
+                <div id="patientDashboard" class="content-page">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="stat-details">
+                                <h3>Upcoming Appointments</h3>
+                                <p class="stat-value">2</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-file-medical"></i></div>
+                            <div class="stat-details">
+                                <h3>Recent Reports</h3>
+                                <p class="stat-value">3</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-pills"></i></div>
+                            <div class="stat-details">
+                                <h3>Active Prescriptions</h3>
+                                <p class="stat-value">1</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-recent">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Your Upcoming Appointments</h2>
+                                <a href="#" class="btn-link" data-page="patientAppointments">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Doctor</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="patientAppointmentsList">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doctor Appointments Page -->
+                <div id="doctorAppointments" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>All Appointments</h2>
+                            <button class="btn btn-primary"><i class="fas fa-plus"></i> New Appointment</button>
+                        </div>
+                        <div class="filter-row">
+                            <div class="search-box">
+                                <input type="text" placeholder="Search patient..." class="form-control">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-controls">
+                                <select class="form-control">
+                                    <option value="all">All Status</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Purpose</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doctorAppointmentsTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Appointments Page -->
+                <div id="patientAppointments" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>My Appointments</h2>
+                            <button class="btn btn-primary"><i class="fas fa-plus"></i> Request Appointment</button>
+                        </div>
+                        <div class="filter-row">
+                            <div class="filter-controls">
+                                <select class="form-control">
+                                    <option value="all">All Status</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Doctor</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Purpose</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientAppointmentsTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Tests Page (Doctor Only) -->
+                <div id="startTests" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Start New Test</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="testForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="testPatient">Patient</label>
+                                        <select id="testPatient" class="form-control" required>
+                                            <option value="">Select Patient</option>
+                                            <!-- Will be populated by JavaScript -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="testType">Test Type</label>
+                                        <select id="testType" class="form-control" required>
+                                            <option value="">Select Test Type</option>
+                                            <option value="blood">Complete Blood Count</option>
+                                            <option value="urine">Urinalysis</option>
+                                            <option value="cholesterol">Lipid Panel</option>
+                                            <option value="thyroid">Thyroid Function</option>
+                                            <option value="liver">Liver Function</option>
+                                            <option value="kidney">Kidney Function</option>
+                                            <option value="glucose">Blood Glucose</option>
+                                            <option value="xray">X-Ray</option>
+                                            <option value="mri">MRI</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="testDate">Date</label>
+                                        <input type="date" id="testDate" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="testTime">Time</label>
+                                        <input type="time" id="testTime" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="testNotes">Notes</label>
+                                    <textarea id="testNotes" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Urgency</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="urgency" value="routine" checked> Routine
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="urgency" value="urgent"> Urgent
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="urgency" value="emergency"> Emergency
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Initiate Test</button>
+                                    <button type="reset" class="btn btn-outline">Reset</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Recent Tests</h2>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Test Type</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTestsTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescriptions Page (Doctor Only) -->
+                <div id="prescriptions" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Create Prescription</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="prescriptionForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="prescriptionPatient">Patient</label>
+                                        <select id="prescriptionPatient" class="form-control" required>
+                                            <option value="">Select Patient</option>
+                                            <!-- Will be populated by JavaScript -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prescriptionDetails">Prescription Details</label>
+                                    <textarea id="prescriptionDetails" class="form-control" rows="5" required placeholder="Enter medication name, dosage, frequency, etc."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prescriptionNotes">Additional Notes</label>
+                                    <textarea id="prescriptionNotes" class="form-control" rows="3" placeholder="Special instructions, side effects to watch for, etc."></textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="validFrom">Valid From</label>
+                                        <input type="date" id="validFrom" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="validUntil">Valid Until</label>
+                                        <input type="date" id="validUntil" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save Prescription</button>
+                                    <button type="reset" class="btn btn-outline">Reset</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Recent Prescriptions</h2>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Details</th>
+                                        <th>Valid Period</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentPrescriptionsTable">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doctor Reports Page -->
+                <div id="doctorReports" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Patient Reports</h2>
+                        </div>
+                        <div class="filter-row">
+                            <div class="search-box">
+                                <input type="text" placeholder="Search patient..." class="form-control">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="reportCategoryFilter" class="form-control">
+                                    <option value="all">All Categories</option>
+                                    <option value="blood">Blood Tests</option>
+                                    <option value="urine">Urine Tests</option>
+                                    <option value="imaging">Imaging</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body reports-grid" id="doctorReportsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Reports Page -->
+                <div id="patientReports" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>My Medical Reports</h2>
+                        </div>
+                        <div class="filter-row">
+                            <div class="filter-controls">
+                                <select id="patientReportCategoryFilter" class="form-control">
+                                    <option value="all">All Categories</option>
+                                    <option value="blood">Blood Tests</option>
+                                    <option value="urine">Urine Tests</option>
+                                    <option value="imaging">Imaging</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body reports-grid" id="patientReportsGrid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle toast-icon success"></i>
+            <i class="fas fa-exclamation-circle toast-icon error"></i>
+            <div class="toast-message">Notification message</div>
+        </div>
+        <div class="toast-close">&times;</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
