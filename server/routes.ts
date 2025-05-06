@@ -41,6 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       specialty: 'Internal Medicine',
       contact: '555-0001',
       availability: 'Mon-Fri, 9AM-5PM',
+      verified: true,
       avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
     },
     { 
@@ -51,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       specialty: 'Family Medicine',
       contact: '555-0002',
       availability: 'Mon-Thu, 8AM-4PM',
+      verified: true,
       avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
     }
   ];
