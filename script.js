@@ -1,5 +1,24 @@
 // Health Buddy - Doctor & Patient Dashboard
 document.addEventListener('DOMContentLoaded', function() {
+    // Detect mobile devices and add a class to the body
+    function isMobileDevice() {
+        return (window.innerWidth <= 768) || 
+               (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    }
+    
+    // Add mobile class to body if on mobile device
+    if (isMobileDevice()) {
+        document.body.classList.add('mobile-device');
+    }
+    
+    // Update on resize
+    window.addEventListener('resize', function() {
+        if (isMobileDevice()) {
+            document.body.classList.add('mobile-device');
+        } else {
+            document.body.classList.remove('mobile-device');
+        }
+    });
     // ===============================================================
     // DATA (Fetched from API endpoints)
     // ===============================================================
@@ -205,6 +224,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('active');
     });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        
+        // If sidebar is active and click is outside sidebar and not on toggle button
+        if (sidebar.classList.contains('active') && 
+            !sidebar.contains(e.target) && 
+            e.target !== toggleBtn && 
+            !toggleBtn.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+    
+    // Add touchstart event for better mobile responsiveness
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }, false);
+    
+    document.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, false);
+    
+    function handleSwipe() {
+        const sidebar = document.getElementById('sidebar');
+        const swipeDistance = Math.abs(touchEndX - touchStartX);
+        
+        // If swipe is significant enough (to avoid small finger movements)
+        if (swipeDistance > 50) {
+            // Right to left swipe (close sidebar)
+            if (touchEndX < touchStartX && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+            // Left to right swipe (open sidebar)
+            else if (touchEndX > touchStartX && !sidebar.classList.contains('active')) {
+                sidebar.classList.add('active');
+            }
+        }
+    }
     
     // Logout button
     document.getElementById('logoutBtn').addEventListener('click', function() {

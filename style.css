@@ -786,18 +786,109 @@ nav a i {
 /* ==========================================================================
    RESPONSIVE STYLES
    ========================================================================== */
+/* Mobile first approach - base styles are for small devices */
+
+/* Mobile-specific styles */
+body.mobile-device .card {
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+body.mobile-device .btn {
+    padding: 0.6rem 1rem; /* Slightly larger touch area */
+}
+
+body.mobile-device .form-control {
+    font-size: 1rem;
+    padding: 0.6rem 0.75rem; /* Larger touch area */
+}
+
+body.mobile-device .table th, 
+body.mobile-device .table td {
+    padding: 0.6rem; /* More space for touch */
+}
+
+body.mobile-device .status-badge {
+    padding: 0.3rem 0.6rem; /* Easier to tap */
+}
+
+/* Small devices (phones, up to 576px) */
+@media (max-width: 576px) {
+    html {
+        font-size: 14px; /* Slightly smaller base font size for very small screens */
+    }
+    
+    .login-container {
+        padding: var(--spacing-md);
+    }
+    
+    .login-form-container {
+        padding: var(--spacing-lg);
+    }
+    
+    .login-logo h1 {
+        font-size: 2rem;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .card-body {
+        padding: var(--spacing-md);
+        overflow-x: auto; /* Allow horizontal scrolling for tables */
+    }
+    
+    .table th, .table td {
+        padding: var(--spacing-sm);
+    }
+    
+    .table {
+        min-width: 500px; /* Ensure table has minimum width */
+    }
+    
+    .stat-card {
+        padding: var(--spacing-md);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .toast {
+        max-width: 95%;
+        min-width: auto;
+        right: 0.5rem;
+    }
+}
+
+/* Medium devices (tablets, 577px to 768px) */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
         width: 240px;
+        z-index: 1100; /* Higher z-index to appear over content */
     }
     
     .sidebar.active {
         transform: translateX(0);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Add shadow when sidebar is open */
     }
     
     .main-content {
         margin-left: 0;
+        width: 100%;
     }
     
     .form-row > .form-group {
@@ -807,6 +898,7 @@ nav a i {
     
     .dashboard-stats {
         grid-template-columns: 1fr;
+        gap: var(--spacing-md);
     }
     
     .reports-grid {
@@ -835,18 +927,48 @@ nav a i {
         width: 100%;
     }
     
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .header h1 {
-        margin-bottom: var(--spacing-md);
+    /* Add overlay when sidebar is active on mobile */
+    .sidebar.active::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: -1;
     }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
+/* Large devices (desktops, 769px to 992px) */
+@media (min-width: 769px) and (max-width: 992px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
     .reports-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Extra large devices (large desktops, 993px and up) */
+@media (min-width: 993px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .reports-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    /* Provide option for wider sidebar on very large screens */
+    @media (min-width: 1400px) {
+        .sidebar {
+            width: 280px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+        }
     }
 }
