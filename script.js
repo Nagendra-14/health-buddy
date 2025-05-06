@@ -26,13 +26,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // User data (for authentication)
     const users = {
         doctors: [
-            { id: 'D001', username: 'doctor', password: 'doctor123', name: 'Dr. Sarah Chen' }
+            { id: 'D001', username: 'doctor', password: 'doctor123', name: 'Dr. Sarah Chen' },
+            { id: 'D002', username: 'doctor2', password: 'doctor123', name: 'Dr. James Wilson' }
         ],
         patients: [
-            { id: 'P001', username: 'patient', password: 'patient123', name: 'John Smith' },
-            { id: 'P002', username: 'maria', password: 'maria123', name: 'Maria Garcia' },
-            { id: 'P003', username: 'david', password: 'david123', name: 'David Johnson' },
-            { id: 'P004', username: 'sarah', password: 'sarah123', name: 'Sarah Williams' }
+            { id: 'P001', username: 'patient', password: 'patient123', name: 'John Smith', doctor: 'D001' },
+            { id: 'P002', username: 'maria', password: 'maria123', name: 'Maria Garcia', doctor: 'D001' },
+            { id: 'P003', username: 'david', password: 'david123', name: 'David Johnson', doctor: 'D001' },
+            { id: 'P004', username: 'sarah', password: 'sarah123', name: 'Sarah Williams', doctor: 'D001' },
+            { id: 'P005', username: 'michael', password: 'michael123', name: 'Michael Brown', doctor: 'D001' },
+            { id: 'P006', username: 'emma', password: 'emma123', name: 'Emma Davis', doctor: 'D002' },
+            { id: 'P007', username: 'james', password: 'james123', name: 'James Miller', doctor: 'D002' },
+            { id: 'P008', username: 'sophia', password: 'sophia123', name: 'Sophia Wilson', doctor: 'D002' },
+            { id: 'P009', username: 'oliver', password: 'oliver123', name: 'Oliver Taylor', doctor: 'D002' },
+            { id: 'P010', username: 'ava', password: 'ava123', name: 'Ava Anderson', doctor: 'D002' }
         ]
     };
     
