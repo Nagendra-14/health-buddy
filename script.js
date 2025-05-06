@@ -308,6 +308,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Password visibility toggle functionality
+    function setupPasswordToggle(toggleButtonId, passwordInputId) {
+        const toggleButton = document.getElementById(toggleButtonId);
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function() {
+                const passwordInput = document.getElementById(passwordInputId);
+                const icon = this.querySelector('i');
+                
+                // Toggle the input type between password and text
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
+    }
+    
+    // Setup password toggles for login and registration forms
+    setupPasswordToggle('toggleLoginPassword', 'password');
+    setupPasswordToggle('toggleRegisterPassword', 'registerPassword');
+    setupPasswordToggle('toggleRegisterConfirmPassword', 'registerConfirmPassword');
+    
     // Login form submission
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
