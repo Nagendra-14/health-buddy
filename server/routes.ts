@@ -209,21 +209,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(allAppointments);
   });
 
+  // Get doctors list
+  app.get('/api/doctors', (req, res) => {
+    const allDoctors = [
+      { 
+        id: 'D001', 
+        name: 'Dr. Sarah Chen', 
+        username: 'doctor', 
+        password: 'doctor123', 
+        specialty: 'Internal Medicine',
+        contact: '555-0001',
+        availability: 'Mon-Fri, 9AM-5PM',
+        avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'D002', 
+        name: 'Dr. James Wilson', 
+        username: 'doctor2', 
+        password: 'doctor123', 
+        specialty: 'Family Medicine',
+        contact: '555-0002',
+        availability: 'Mon-Thu, 8AM-4PM',
+        avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      }
+    ];
+    
+    res.json(allDoctors);
+  });
+
   // Get patients list
   app.get('/api/patients', (req, res) => {
     const doctorId = req.query.doctorId as string;
     
     const allPatients = [
-      { id: 'P001', name: 'John Smith', doctorId: 'D001', age: 45, gender: 'Male', contact: '555-1234', medicalHistory: 'Hypertension, Diabetes' },
-      { id: 'P002', name: 'Maria Garcia', doctorId: 'D001', age: 38, gender: 'Female', contact: '555-2345', medicalHistory: 'Asthma' },
-      { id: 'P003', name: 'David Johnson', doctorId: 'D001', age: 52, gender: 'Male', contact: '555-3456', medicalHistory: 'High cholesterol' },
-      { id: 'P004', name: 'Sarah Williams', doctorId: 'D001', age: 29, gender: 'Female', contact: '555-4567', medicalHistory: 'Migraine' },
-      { id: 'P005', name: 'Michael Brown', doctorId: 'D001', age: 61, gender: 'Male', contact: '555-5678', medicalHistory: 'Arthritis' },
-      { id: 'P006', name: 'Emma Davis', doctorId: 'D002', age: 33, gender: 'Female', contact: '555-6789', medicalHistory: 'Anxiety' },
-      { id: 'P007', name: 'James Miller', doctorId: 'D002', age: 47, gender: 'Male', contact: '555-7890', medicalHistory: 'GERD' },
-      { id: 'P008', name: 'Sophia Wilson', doctorId: 'D002', age: 55, gender: 'Female', contact: '555-8901', medicalHistory: 'Hypothyroidism' },
-      { id: 'P009', name: 'Oliver Taylor', doctorId: 'D002', age: 42, gender: 'Male', contact: '555-9012', medicalHistory: 'Depression' },
-      { id: 'P010', name: 'Ava Anderson', doctorId: 'D002', age: 27, gender: 'Female', contact: '555-0123', medicalHistory: 'Allergies' }
+      { 
+        id: 'P001', 
+        name: 'John Smith', 
+        username: 'patient', 
+        password: 'patient123', 
+        doctorId: 'D001', 
+        age: 45, 
+        gender: 'Male', 
+        contact: '555-1234', 
+        medicalHistory: 'Hypertension, Diabetes',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P002', 
+        name: 'Maria Garcia', 
+        username: 'patient2', 
+        password: 'patient123', 
+        doctorId: 'D001', 
+        age: 38, 
+        gender: 'Female', 
+        contact: '555-2345', 
+        medicalHistory: 'Asthma',
+        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P003', 
+        name: 'David Johnson', 
+        username: 'patient3', 
+        password: 'patient123', 
+        doctorId: 'D001', 
+        age: 52, 
+        gender: 'Male', 
+        contact: '555-3456', 
+        medicalHistory: 'High cholesterol',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P004', 
+        name: 'Sarah Williams', 
+        username: 'patient4', 
+        password: 'patient123', 
+        doctorId: 'D001', 
+        age: 29, 
+        gender: 'Female', 
+        contact: '555-4567', 
+        medicalHistory: 'Migraine',
+        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P005', 
+        name: 'Michael Brown', 
+        username: 'patient5', 
+        password: 'patient123', 
+        doctorId: 'D001', 
+        age: 61, 
+        gender: 'Male', 
+        contact: '555-5678', 
+        medicalHistory: 'Arthritis',
+        avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P006', 
+        name: 'Emma Davis', 
+        username: 'patient6', 
+        password: 'patient123', 
+        doctorId: 'D002', 
+        age: 33, 
+        gender: 'Female', 
+        contact: '555-6789', 
+        medicalHistory: 'Anxiety',
+        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P007', 
+        name: 'James Miller', 
+        username: 'patient7', 
+        password: 'patient123', 
+        doctorId: 'D002', 
+        age: 47, 
+        gender: 'Male', 
+        contact: '555-7890', 
+        medicalHistory: 'GERD',
+        avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P008', 
+        name: 'Sophia Wilson', 
+        username: 'patient8', 
+        password: 'patient123', 
+        doctorId: 'D002', 
+        age: 55, 
+        gender: 'Female', 
+        contact: '555-8901', 
+        medicalHistory: 'Hypothyroidism',
+        avatarUrl: 'https://images.unsplash.com/photo-1532074205216-d0e1f4b87368?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P009', 
+        name: 'Oliver Taylor', 
+        username: 'patient9', 
+        password: 'patient123',
+        doctorId: 'D002', 
+        age: 42, 
+        gender: 'Male', 
+        contact: '555-9012', 
+        medicalHistory: 'Depression',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      },
+      { 
+        id: 'P010', 
+        name: 'Ava Anderson', 
+        username: 'patient10', 
+        password: 'patient123', 
+        doctorId: 'D002', 
+        age: 27, 
+        gender: 'Female', 
+        contact: '555-0123', 
+        medicalHistory: 'Allergies',
+        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      }
     ];
     
     // If a doctorId is provided, filter patients by that doctor

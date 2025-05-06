@@ -174,65 +174,95 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // API function to authenticate a user
+    async function authenticateUser(username, password, userType) {
+        try {
+            const endpoint = userType === 'doctor' ? '/api/doctors' : '/api/patients';
+            const response = await fetch(endpoint);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${userType}s data`);
+            }
+            
+            const users = await response.json();
+            
+            // Find user with matching username and password
+            const authenticatedUser = users.find(
+                user => user.username === username && user.password === password
+            );
+            
+            return authenticatedUser;
+        } catch (error) {
+            console.error('Authentication error:', error);
+            return null;
+        }
+    }
+    
     // ===============================================================
     // EVENT LISTENERS
     // ===============================================================
     
     // Login form submission
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const userType = document.getElementById('userType').value;
         
-        // Authenticate user
-        let authenticatedUser = null;
+        // Show loading indicator
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        submitBtn.disabled = true;
         
-        if (userType === 'doctor') {
-            authenticatedUser = users.doctors.find(
-                doctor => doctor.username === username && doctor.password === password
-            );
+        try {
+            // Authenticate user via API
+            const authenticatedUser = await authenticateUser(username, password, userType);
             
             if (authenticatedUser) {
                 currentUser = {
                     id: authenticatedUser.id,
                     name: authenticatedUser.name,
-                    type: 'doctor'
+                    type: userType,
+                    // Include avatar if available
+                    avatar: authenticatedUser.avatarUrl || null
                 };
+                
+                // Save user to localStorage
+                localStorage.setItem('healthBuddyUser', JSON.stringify(currentUser));
+                document.body.dataset.userType = currentUser.type;
+                
+                // Show dashboard and setup navigation
+                showDashboard();
+                setupNavigation();
+                updateUserInfo();
+                
+                // Depending on user type, set default page
+                const defaultPage = currentUser.type === 'doctor' ? 'doctorDashboard' : 'patientDashboard';
+                navigateTo(defaultPage);
+                
+                // Load user-specific data
+                if (currentUser.type === 'doctor') {
+                    await loadDoctorData();
+                } else {
+                    await loadPatientData();
+                }
+                
+                // Show welcome notification
+                showToast(`Welcome, ${currentUser.name}!`, 'success');
+            } else {
+                showToast('Invalid username or password. Please try again.', 'error');
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
             }
-        } else if (userType === 'patient') {
-            authenticatedUser = users.patients.find(
-                patient => patient.username === username && patient.password === password
-            );
-            
-            if (authenticatedUser) {
-                currentUser = {
-                    id: authenticatedUser.id,
-                    name: authenticatedUser.name,
-                    type: 'patient'
-                };
-            }
-        }
-        
-        if (currentUser) {
-            // Save user to localStorage
-            localStorage.setItem('healthBuddyUser', JSON.stringify(currentUser));
-            document.body.dataset.userType = currentUser.type;
-            
-            // Show dashboard and setup navigation
-            showDashboard();
-            setupNavigation();
-            updateUserInfo();
-            
-            // Depending on user type, set default page
-            const defaultPage = currentUser.type === 'doctor' ? 'doctorDashboard' : 'patientDashboard';
-            navigateTo(defaultPage);
-            
-            // Show welcome notification
-            showToast(`Welcome, ${currentUser.name}!`, 'success');
-        } else {
-            showToast('Invalid username or password. Please try again.', 'error');
+        } catch (error) {
+            console.error('Login error:', error);
+            showToast('An error occurred during login. Please try again.', 'error');
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
         }
     });
     
@@ -307,41 +337,132 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Test form submission
-    document.getElementById('testForm').addEventListener('submit', function(e) {
+    document.getElementById('testForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const patientId = document.getElementById('testPatient').value;
         const testType = document.getElementById('testType').value;
-        const patient = users.patients.find(p => p.id === patientId);
+        const testDate = document.getElementById('testDate').value;
+        const notes = document.getElementById('testNotes').value;
         
-        showToast(`Test initiated successfully for ${patient.name}`, 'success');
+        // Get patient name from select element
+        const patientName = document.querySelector(`#testPatient option[value="${patientId}"]`).textContent;
         
-        // Reset form
-        this.reset();
-        
-        // Set current date as default
-        document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+        try {
+            // Prepare test data
+            const testData = {
+                patientId,
+                patientName,
+                testType,
+                date: testDate,
+                notes,
+                doctorId: currentUser.id,
+                doctorName: currentUser.name,
+                status: 'Pending'
+            };
+            
+            // Submit test via API
+            const result = await createTest(testData);
+            
+            if (result) {
+                showToast(`Test initiated successfully for ${patientName}`, 'success');
+                
+                // Reset form
+                this.reset();
+                
+                // Set current date as default
+                document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+                
+                // Refresh recent tests list
+                await loadRecentTests();
+            }
+        } catch (error) {
+            console.error('Error creating test:', error);
+            showToast('Error creating test. Please try again.', 'error');
+        }
     });
     
     // Prescription form submission
-    document.getElementById('prescriptionForm').addEventListener('submit', function(e) {
+    document.getElementById('prescriptionForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const patientId = document.getElementById('prescriptionPatient').value;
-        const patient = users.patients.find(p => p.id === patientId);
+        const prescriptionDetails = document.getElementById('prescriptionDetails').value;
+        const validFrom = document.getElementById('validFrom').value;
+        const validUntil = document.getElementById('validUntil').value;
         
-        showToast(`Prescription saved successfully for ${patient.name}`, 'success');
+        // Get patient name from select element
+        const patientName = document.querySelector(`#prescriptionPatient option[value="${patientId}"]`).textContent;
         
-        // Reset form
-        this.reset();
-        
-        // Set default dates
-        const today = new Date().toISOString().split('T')[0];
-        const threeMonthsLater = new Date();
-        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-        
-        document.getElementById('validFrom').value = today;
-        document.getElementById('validUntil').value = threeMonthsLater.toISOString().split('T')[0];
+        try {
+            // Process prescription details into medication objects
+            // Expecting format like "Medication name 500mg, Once daily. Take with food"
+            let medications = [];
+            
+            if (prescriptionDetails) {
+                // Split by double newlines to separate medications
+                const medicationTexts = prescriptionDetails.split(/\n\s*\n/);
+                
+                medications = medicationTexts.map(medText => {
+                    const parts = medText.trim().split(/\.\s+/);
+                    const firstPart = parts[0].split(',');
+                    
+                    // Extract medication name and dosage
+                    const nameAndDosage = firstPart[0].trim().split(/\s+(?=\d+\w+$)/);
+                    const name = nameAndDosage.length > 1 ? nameAndDosage[0] : firstPart[0];
+                    const dosage = nameAndDosage.length > 1 ? nameAndDosage[1] : '';
+                    
+                    // Extract frequency
+                    const frequency = firstPart.length > 1 ? firstPart[1].trim() : '';
+                    
+                    // Extract instructions
+                    const instructions = parts.length > 1 ? parts[1].trim() : '';
+                    
+                    return {
+                        name,
+                        dosage,
+                        frequency,
+                        instructions
+                    };
+                });
+            }
+            
+            // Prepare prescription data
+            const prescriptionData = {
+                patientId,
+                patientName,
+                doctorId: currentUser.id,
+                doctorName: currentUser.name,
+                medications,
+                validFrom,
+                validUntil,
+                details: medications.length === 0 ? prescriptionDetails : null // Fallback if parsing failed
+            };
+            
+            // Submit prescription via API
+            const result = await savePrescription(prescriptionData);
+            
+            if (result) {
+                showToast(`Prescription saved successfully for ${patientName}`, 'success');
+                
+                // Reset form
+                this.reset();
+                
+                // Set default dates
+                const today = new Date().toISOString().split('T')[0];
+                const threeMonthsLater = new Date();
+                threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+                
+                document.getElementById('validFrom').value = today;
+                document.getElementById('validUntil').value = threeMonthsLater.toISOString().split('T')[0];
+                
+                // Refresh prescriptions list
+                await loadPrescriptions();
+            }
+        } catch (error) {
+            console.error('Error saving prescription:', error);
+            showToast('Error saving prescription. Please try again.', 'error');
+        }
     });
     
     // Add click event listeners for all navigation buttons
