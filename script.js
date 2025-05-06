@@ -1043,9 +1043,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (prescription) {
             // Populate prescription form
             document.getElementById('prescriptionPatient').value = prescription.patientId;
-            document.getElementById('prescriptionDetails').value = prescription.details;
-            document.getElementById('validFrom').value = prescription.validFrom;
-            document.getElementById('validUntil').value = prescription.validUntil;
+            
+            // Prepare medication details from the medications array
+            const medicationDetails = prescription.medications 
+                ? prescription.medications.map(med => 
+                    `${med.name} ${med.dosage}, ${med.frequency}. ${med.instructions}`
+                ).join('\n\n')
+                : '';
+                
+            document.getElementById('prescriptionDetails').value = medicationDetails || prescription.details || '';
+            
+            // Set dates
+            // Convert date format if needed
+            try {
+                const validFromDate = new Date(prescription.validFrom);
+                const validUntilDate = new Date(prescription.validUntil);
+                
+                // Use standard format for form input (YYYY-MM-DD)
+                document.getElementById('validFrom').value = validFromDate.toISOString().split('T')[0];
+                document.getElementById('validUntil').value = validUntilDate.toISOString().split('T')[0];
+            } catch (e) {
+                // If date parsing fails, use the original strings
+                document.getElementById('validFrom').value = prescription.validFrom;
+                document.getElementById('validUntil').value = prescription.validUntil;
+            }
             
             // Navigate to prescriptions page
             navigateTo('prescriptions');
