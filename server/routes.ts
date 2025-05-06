@@ -763,7 +763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add visit to database
       await db.insert(userVisits).values({
         userId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
       });
       
       res.status(201).json({ message: 'Visit recorded successfully' });
