@@ -1,8 +1,27 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get the directory name from the file URL
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static HTML, CSS, and JS files for Health Buddy
+  app.get('/', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../index.html'));
+  });
+  
+  app.get('/style.css', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../style.css'));
+  });
+  
+  app.get('/script.js', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../script.js'));
+  });
+  
   // API routes for Health Buddy application
 
   // Get all appointments

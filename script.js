@@ -1,10 +1,10 @@
 // Health Buddy - Doctor & Patient Dashboard
 document.addEventListener('DOMContentLoaded', function() {
     // ===============================================================
-    // MOCK DATA (This would come from a real API in a production app)
+    // DATA (Fetched from API endpoints)
     // ===============================================================
     
-    // User data
+    // User data (for authentication)
     const users = {
         doctors: [
             { id: 'D001', username: 'doctor', password: 'doctor123', name: 'Dr. Sarah Chen' }
@@ -18,192 +18,100 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Appointment data
-    const appointments = [
-        // Doctor's view of all appointments
-        { 
-            id: 'A001',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            date: '2025-05-06',
-            time: '09:00 AM',
-            purpose: 'General Checkup',
-            status: 'Scheduled'
-        },
-        { 
-            id: 'A002',
-            patientId: 'P002',
-            patientName: 'Maria Garcia',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            date: '2025-05-06',
-            time: '10:15 AM',
-            purpose: 'Follow-up',
-            status: 'In Progress'
-        },
-        { 
-            id: 'A003',
-            patientId: 'P003',
-            patientName: 'David Johnson',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            date: '2025-05-06',
-            time: '11:30 AM',
-            purpose: 'Consultation',
-            status: 'Scheduled'
-        },
-        { 
-            id: 'A004',
-            patientId: 'P004',
-            patientName: 'Sarah Williams',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            date: '2025-05-05',
-            time: '02:00 PM',
-            purpose: 'Annual Physical',
-            status: 'Completed'
-        },
-        { 
-            id: 'A005',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            date: '2025-05-10',
-            time: '09:30 AM',
-            purpose: 'Follow-up',
-            status: 'Scheduled'
-        }
-    ];
+    let appointments = [];
     
-    // Test data
-    const tests = [
-        { 
-            id: 'T001',
-            patientId: 'P004',
-            patientName: 'Sarah Williams',
-            testType: 'Complete Blood Count (CBC)',
-            date: '2025-05-05',
-            status: 'Completed' 
-        },
-        { 
-            id: 'T002',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            testType: 'Lipid Panel',
-            date: '2025-05-04',
-            status: 'Completed' 
-        },
-        { 
-            id: 'T003',
-            patientId: 'P002',
-            patientName: 'Maria Garcia',
-            testType: 'Thyroid Function',
-            date: '2025-05-03',
-            status: 'In Progress' 
-        },
-        { 
-            id: 'T004',
-            patientId: 'P003',
-            patientName: 'David Johnson',
-            testType: 'Blood Glucose',
-            date: '2025-05-01',
-            status: 'Completed' 
+    // API function to fetch appointments
+    async function fetchAppointments() {
+        try {
+            const response = await fetch('/api/appointments');
+            if (!response.ok) {
+                throw new Error('Failed to fetch appointments');
+            }
+            const data = await response.json();
+            appointments = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching appointments:', error);
+            showToast('Error loading appointments. Please try again.', 'error');
+            return [];
         }
-    ];
+    }
     
-    // Prescription data
-    const prescriptions = [
-        { 
-            id: 'PR001',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            details: 'Lisinopril 10mg, 1 tablet daily for blood pressure. Take in the morning.',
-            validFrom: '2025-05-01',
-            validUntil: '2025-08-01' 
-        },
-        { 
-            id: 'PR002',
-            patientId: 'P002',
-            patientName: 'Maria Garcia',
-            details: 'Metformin 500mg, 1 tablet twice daily with meals for diabetes management.',
-            validFrom: '2025-04-25',
-            validUntil: '2025-10-25' 
-        },
-        { 
-            id: 'PR003',
-            patientId: 'P003',
-            patientName: 'David Johnson',
-            details: 'Atorvastatin 20mg, 1 tablet daily at bedtime for cholesterol management.',
-            validFrom: '2025-04-20',
-            validUntil: '2025-10-20' 
+    // API function to fetch patients list
+    async function fetchPatients() {
+        try {
+            const response = await fetch('/api/patients');
+            if (!response.ok) {
+                throw new Error('Failed to fetch patients');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            showToast('Error loading patient list. Please try again.', 'error');
+            return [];
         }
-    ];
+    }
     
-    // Report data
-    const reports = [
-        { 
-            id: 'R001',
-            name: 'Complete Blood Count',
-            category: 'Blood Test',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            date: '2025-05-01',
-            status: 'Normal',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            details: 'All values within normal range. Hemoglobin: 14.2 g/dL, WBC: 7.5 x10^9/L, Platelets: 250 x10^9/L.'
-        },
-        { 
-            id: 'R002',
-            name: 'Lipid Panel',
-            category: 'Blood Test',
-            patientId: 'P002',
-            patientName: 'Maria Garcia',
-            date: '2025-04-28',
-            status: 'Borderline',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            details: 'Total Cholesterol: 210 mg/dL (borderline high), LDL: 140 mg/dL (borderline high), HDL: 45 mg/dL, Triglycerides: 150 mg/dL.'
-        },
-        { 
-            id: 'R003',
-            name: 'Urinalysis',
-            category: 'Urine Test',
-            patientId: 'P003',
-            patientName: 'David Johnson',
-            date: '2025-04-27',
-            status: 'Normal',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            details: 'Normal results. No protein, glucose, ketones, blood, or leukocytes detected.'
-        },
-        { 
-            id: 'R004',
-            name: 'Chest X-Ray',
-            category: 'Imaging',
-            patientId: 'P004',
-            patientName: 'Sarah Williams',
-            date: '2025-04-26',
-            status: 'Normal',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            details: 'Lungs appear clear. No consolidation, effusion, or pneumothorax. Heart size normal.'
-        },
-        { 
-            id: 'R005',
-            name: 'Thyroid Function Test',
-            category: 'Blood Test',
-            patientId: 'P001',
-            patientName: 'John Smith',
-            date: '2025-04-25',
-            status: 'Abnormal',
-            doctorId: 'D001',
-            doctorName: 'Dr. Sarah Chen',
-            details: 'TSH: 5.8 mIU/L (high), Free T4: 0.8 ng/dL (low-normal). Results suggest hypothyroidism. Recommend endocrinology referral.'
+    // API function to create a new test
+    async function createTest(testData) {
+        try {
+            const response = await fetch('/api/tests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create test');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating test:', error);
+            showToast('Error creating test. Please try again.', 'error');
+            throw error;
         }
-    ];
+    }
+    
+    // API function to save a prescription
+    async function savePrescription(prescriptionData) {
+        try {
+            const response = await fetch('/api/prescriptions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(prescriptionData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to save prescription');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error saving prescription:', error);
+            showToast('Error saving prescription. Please try again.', 'error');
+            throw error;
+        }
+    }
+    
+    // API function to fetch reports
+    async function fetchReports() {
+        try {
+            const response = await fetch('/api/reports');
+            if (!response.ok) {
+                throw new Error('Failed to fetch reports');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            showToast('Error loading reports. Please try again.', 'error');
+            return [];
+        }
+    }
 
     // ===============================================================
     // APPLICATION STATE
