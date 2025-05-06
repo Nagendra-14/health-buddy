@@ -198,9 +198,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // API function to register a new user
+    async function registerUser(userData) {
+        try {
+            const endpoint = userData.userType === 'doctor' ? '/api/register/doctor' : '/api/register/patient';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Registration failed');
+            }
+            
+            return { success: true, data: result };
+        } catch (error) {
+            console.error('Registration error:', error);
+            return { success: false, message: error.message };
+        }
+    }
+    
+    // API function to load doctors for the registration form
+    async function loadDoctorsForRegistration() {
+        try {
+            const response = await fetch('/api/doctors');
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch doctors');
+            }
+            
+            const doctors = await response.json();
+            const verifiedDoctors = doctors.filter(doctor => doctor.verified !== false);
+            
+            // Populate doctor dropdown in registration form
+            const doctorSelect = document.getElementById('registerDoctor');
+            doctorSelect.innerHTML = '<option value="">Select a Doctor</option>';
+            
+            verifiedDoctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = `${doctor.name} (${doctor.specialty})`;
+                doctorSelect.appendChild(option);
+            });
+            
+        } catch (error) {
+            console.error('Error loading doctors for registration:', error);
+        }
+    }
+    
+    // API function to record a user visit
+    async function recordUserVisit(userId) {
+        try {
+            const response = await fetch('/api/visits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId, timestamp: new Date().toISOString() })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to record visit');
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error recording visit:', error);
+            return false;
+        }
+    }
+    
     // ===============================================================
     // EVENT LISTENERS
     // ===============================================================
+    
+    // Auth tabs switching
+    document.getElementById('loginTabBtn').addEventListener('click', function() {
+        document.getElementById('loginTabBtn').classList.add('active');
+        document.getElementById('registerTabBtn').classList.remove('active');
+        document.getElementById('loginFormContainer').classList.add('active');
+        document.getElementById('registerFormContainer').classList.remove('active');
+    });
+    
+    document.getElementById('registerTabBtn').addEventListener('click', function() {
+        document.getElementById('registerTabBtn').classList.add('active');
+        document.getElementById('loginTabBtn').classList.remove('active');
+        document.getElementById('registerFormContainer').classList.add('active');
+        document.getElementById('loginFormContainer').classList.remove('active');
+        loadDoctorsForRegistration();
+    });
+    
+    // Toggle doctor/patient specific fields in registration form
+    document.getElementById('registerUserType').addEventListener('change', function() {
+        const userType = this.value;
+        const doctorFields = document.getElementById('doctorFields');
+        const patientFields = document.getElementById('patientFields');
+        
+        if (userType === 'doctor') {
+            doctorFields.style.display = 'block';
+            patientFields.style.display = 'none';
+        } else {
+            doctorFields.style.display = 'none';
+            patientFields.style.display = 'block';
+        }
+    });
     
     // Login form submission
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -221,6 +327,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const authenticatedUser = await authenticateUser(username, password, userType);
             
             if (authenticatedUser) {
+                // Check if doctor account is verified
+                if (userType === 'doctor' && authenticatedUser.verified === false) {
+                    showToast('Your doctor account is pending verification. You will be notified once your account is verified.', 'warning');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
                 currentUser = {
                     id: authenticatedUser.id,
                     name: authenticatedUser.name,
@@ -232,6 +346,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Save user to localStorage
                 localStorage.setItem('healthBuddyUser', JSON.stringify(currentUser));
                 document.body.dataset.userType = currentUser.type;
+                
+                // Record this login for visit tracking
+                await recordUserVisit(authenticatedUser.id);
                 
                 // Show dashboard and setup navigation
                 showDashboard();
@@ -260,6 +377,126 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Login error:', error);
             showToast('An error occurred during login. Please try again.', 'error');
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        }
+    });
+    
+    // Registration form submission
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get common form data
+        const userType = document.getElementById('registerUserType').value;
+        const name = document.getElementById('registerName').value.trim();
+        const username = document.getElementById('registerUsername').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        const email = document.getElementById('registerEmail').value.trim();
+        const contact = document.getElementById('registerContact').value.trim();
+        
+        // Validate password match
+        if (password !== confirmPassword) {
+            showToast('Passwords do not match. Please try again.', 'error');
+            return;
+        }
+        
+        // Show loading indicator
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+        submitBtn.disabled = true;
+        
+        try {
+            let userData = {
+                name,
+                username,
+                password,
+                email,
+                contact,
+                userType
+            };
+            
+            // Add user type specific fields
+            if (userType === 'doctor') {
+                const specialty = document.getElementById('registerSpecialty').value;
+                const license = document.getElementById('registerLicense').value.trim();
+                const availability = document.getElementById('registerAvailability').value.trim();
+                
+                // Validate doctor fields
+                if (!specialty) {
+                    showToast('Please select a specialty.', 'error');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                if (!license) {
+                    showToast('Please enter your medical license number.', 'error');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                userData = {
+                    ...userData,
+                    specialty,
+                    license,
+                    availability,
+                    verified: false // Doctors start as unverified
+                };
+            } else {
+                // Patient specific fields
+                const age = document.getElementById('registerAge').value;
+                const gender = document.getElementById('registerGender').value;
+                const medicalHistory = document.getElementById('registerMedicalHistory').value.trim();
+                const doctorId = document.getElementById('registerDoctor').value;
+                
+                // Validate patient fields
+                if (!age) {
+                    showToast('Please enter your age.', 'error');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                userData = {
+                    ...userData,
+                    age: parseInt(age),
+                    gender,
+                    medicalHistory,
+                    doctorId: doctorId || null
+                };
+            }
+            
+            // Register user via API
+            const result = await registerUser(userData);
+            
+            if (result.success) {
+                // Clear form
+                this.reset();
+                
+                // Show appropriate message based on user type
+                if (userType === 'doctor') {
+                    showToast('Registration successful! Your account is pending verification by our administrators.', 'success');
+                    // Switch back to login tab
+                    document.getElementById('loginTabBtn').click();
+                } else {
+                    showToast('Registration successful! You can now log in.', 'success');
+                    // Switch back to login tab
+                    document.getElementById('loginTabBtn').click();
+                }
+            } else {
+                showToast(result.message || 'Registration failed. Please try again.', 'error');
+            }
+            
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        } catch (error) {
+            console.error('Registration error:', error);
+            showToast('An error occurred during registration. Please try again.', 'error');
             // Reset button
             submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;

@@ -374,6 +374,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(allPatients);
   });
 
+  // Create endpoints for user visits
+  let userVisits: { userId: string; timestamp: string; }[] = [];
+  
+  // Store pending doctor registrations for admin verification
+  let pendingDoctors: any[] = [];
+  
+  // API endpoint to register a new doctor
+  app.post('/api/register/doctor', (req, res) => {
+    const { username, password, name, email, contact, specialty, license, availability } = req.body;
+    
+    // Check if username already exists
+    const existingDoctor = allDoctors.find(doctor => doctor.username === username);
+    if (existingDoctor) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    
+    // Generate a new ID based on the highest existing ID
+    const lastId = allDoctors.length > 0 
+      ? parseInt(allDoctors[allDoctors.length - 1].id.substring(1))
+      : 0;
+    const newId = `D${String(lastId + 1).padStart(3, '0')}`;
+    
+    // Create new doctor object (starts as unverified)
+    const newDoctor = {
+      id: newId,
+      name,
+      username,
+      password,
+      specialty,
+      license,
+      contact,
+      email,
+      availability,
+      verified: false,
+      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+    };
+    
+    // Add to pending doctors list
+    pendingDoctors.push(newDoctor);
+    
+    // Return success
+    res.status(201).json({ message: 'Doctor registration submitted for verification', doctor: { ...newDoctor, password: undefined } });
+  });
+  
+  // API endpoint to register a new patient
+  app.post('/api/register/patient', (req, res) => {
+    const { username, password, name, email, contact, age, gender, medicalHistory, doctorId } = req.body;
+    
+    // Check if username already exists
+    const existingPatient = allPatients.find(patient => patient.username === username);
+    if (existingPatient) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    
+    // Generate a new ID based on the highest existing ID
+    const lastId = allPatients.length > 0 
+      ? parseInt(allPatients[allPatients.length - 1].id.substring(1))
+      : 0;
+    const newId = `P${String(lastId + 1).padStart(3, '0')}`;
+    
+    // Create new patient object
+    const newPatient = {
+      id: newId,
+      name,
+      username,
+      password,
+      email,
+      contact,
+      age,
+      gender,
+      medicalHistory: medicalHistory || '',
+      doctorId: doctorId || null,
+      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+    };
+    
+    // Add to patients list
+    allPatients.push(newPatient);
+    
+    // Return success
+    res.status(201).json({ message: 'Patient registered successfully', patient: { ...newPatient, password: undefined } });
+  });
+  
+  // API endpoint to verify a doctor (admin only)
+  app.put('/api/admin/verify-doctor/:doctorId', (req, res) => {
+    const { doctorId } = req.params;
+    
+    // Find doctor in pending list
+    const pendingDoctorIndex = pendingDoctors.findIndex(doctor => doctor.id === doctorId);
+    
+    if (pendingDoctorIndex === -1) {
+      return res.status(404).json({ message: 'Doctor not found in pending list' });
+    }
+    
+    // Set as verified and move to active doctors list
+    const verifiedDoctor = { ...pendingDoctors[pendingDoctorIndex], verified: true };
+    allDoctors.push(verifiedDoctor);
+    
+    // Remove from pending list
+    pendingDoctors.splice(pendingDoctorIndex, 1);
+    
+    res.status(200).json({ message: 'Doctor verified successfully', doctor: { ...verifiedDoctor, password: undefined } });
+  });
+  
+  // API endpoint to get pending doctors (admin only)
+  app.get('/api/admin/pending-doctors', (req, res) => {
+    // Return pending doctors list (exclude passwords for security)
+    const sanitizedPendingDoctors = pendingDoctors.map(doctor => {
+      const { password, ...sanitizedDoctor } = doctor;
+      return sanitizedDoctor;
+    });
+    
+    res.json(sanitizedPendingDoctors);
+  });
+  
+  // API endpoint to record a user visit
+  app.post('/api/visits', (req, res) => {
+    const { userId, timestamp } = req.body;
+    
+    // Add to visits list
+    userVisits.push({ userId, timestamp });
+    
+    res.status(201).json({ message: 'Visit recorded successfully' });
+  });
+  
+  // API endpoint to get user visits (can be filtered by userId and date range)
+  app.get('/api/admin/visits', (req, res) => {
+    const { userId, startDate, endDate } = req.query;
+    
+    let filteredVisits = [...userVisits];
+    
+    if (userId) {
+      filteredVisits = filteredVisits.filter(visit => visit.userId === userId);
+    }
+    
+    if (startDate) {
+      const start = new Date(startDate as string);
+      filteredVisits = filteredVisits.filter(visit => new Date(visit.timestamp) >= start);
+    }
+    
+    if (endDate) {
+      const end = new Date(endDate as string);
+      filteredVisits = filteredVisits.filter(visit => new Date(visit.timestamp) <= end);
+    }
+    
+    // Group visits by user for counting
+    const visitCounts: Record<string, number> = {};
+    filteredVisits.forEach(visit => {
+      visitCounts[visit.userId] = (visitCounts[visit.userId] || 0) + 1;
+    });
+    
+    res.json({
+      visits: filteredVisits,
+      totalVisits: filteredVisits.length,
+      visitsByUser: visitCounts
+    });
+  });
+
   // Get available tests
   app.get('/api/tests', (req, res) => {
     res.json([
