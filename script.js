@@ -495,15 +495,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 setupNavigation();
                 updateUserInfo();
                 
-                // Depending on user type, set default page
-                const defaultPage = currentUser.type === 'doctor' ? 'doctorDashboard' : 'patientDashboard';
+                // Determine default page based on user type
+                let defaultPage = 'patientDashboard';
+                if (currentUser.type === 'doctor') {
+                    defaultPage = 'doctorDashboard';
+                } else if (currentUser.type === 'receptionist') {
+                    defaultPage = 'receptionistDashboard';
+                } else if (currentUser.type === 'labTechnician') {
+                    defaultPage = 'labTechnicianDashboard';
+                }
                 navigateTo(defaultPage);
                 
                 // Load user-specific data
                 if (currentUser.type === 'doctor') {
                     await loadDoctorData();
-                } else {
+                } else if (currentUser.type === 'patient') {
                     await loadPatientData();
+                } else if (currentUser.type === 'receptionist') {
+                    await loadReceptionistData();
+                } else if (currentUser.type === 'labTechnician') {
+                    await loadLabTechnicianData();
                 }
                 
                 // Show welcome notification

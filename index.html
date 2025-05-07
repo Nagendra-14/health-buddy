@@ -389,6 +389,106 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Receptionist Dashboard -->
+                <div id="receptionistDashboard" class="content-page">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                            <div class="stat-details">
+                                <h3>Today's Appointments</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                            <div class="stat-details">
+                                <h3>Pending Appointments</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Patients</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-recent">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Today's Schedule</h2>
+                                <a href="#" class="btn-link" data-page="receptionistAppointments">Manage All</a>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Doctor</th>
+                                            <th>Time</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="receptionistAppointmentsList">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Technician Dashboard -->
+                <div id="labTechnicianDashboard" class="content-page">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-vial"></i></div>
+                            <div class="stat-details">
+                                <h3>Pending Tests</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="stat-details">
+                                <h3>Completed Tests</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
+                            <div class="stat-details">
+                                <h3>Patients</h3>
+                                <p class="stat-value">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-recent">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Pending Tests</h2>
+                                <a href="#" class="btn-link" data-page="labTests">Manage Tests</a>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Test Type</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="labTechnicianTestsList">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Doctor Appointments Page -->
                 <div id="doctorAppointments" class="content-page">
