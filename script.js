@@ -275,9 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add debug info
                 console.log("Login check complete - user loaded:", user.name);
-                
-                // Note: We don't show welcome toast here since this is an auto-login from saved credentials
-                // This avoids duplicating welcome messages when the page is refreshed
             } catch (e) {
                 console.error("Error in checkExistingLogin:", e);
                 // Invalid saved user data
@@ -546,12 +543,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     await loadLabTechnicianData();
                 }
                 
-                // Only show welcome notification if this is a fresh login (not a page refresh)
-                // This prevents duplicate notifications
-                const isUserJustLoggedIn = true; // We're in the login form handler
-                if (isUserJustLoggedIn) {
-                    showToast(`Welcome, ${currentUser.name}!`, 'success');
-                }
+                // Show welcome notification
+                showToast(`Welcome, ${currentUser.name}!`, 'success');
             } else {
                 showToast('Invalid username or password. Please try again.', 'error');
                 // Reset button
@@ -1758,7 +1751,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show toast notification
+    // Track the last shown toast to prevent duplicates
+    let lastToastMessage = '';
+    let lastToastTime = 0;
+    
     function showToast(message, type = 'success') {
+        const now = Date.now();
+        
+        // Prevent duplicate toast messages within 3 seconds
+        if (message === lastToastMessage && now - lastToastTime < 3000) {
+            console.log("Preventing duplicate toast message:", message);
+            return;
+        }
+        
+        // Update tracking variables
+        lastToastMessage = message;
+        lastToastTime = now;
+        
         const toast = document.getElementById('toast');
         const toastMessage = toast.querySelector('.toast-message');
         
