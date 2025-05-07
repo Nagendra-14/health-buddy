@@ -290,6 +290,10 @@
                 <button class="tab-btn active" data-tab="patients">Patients</button>
                 <button class="tab-btn" data-tab="doctors">Doctors</button>
                 <button class="tab-btn" data-tab="pending-doctors">Pending Doctors</button>
+                <button class="tab-btn" data-tab="receptionists">Receptionists</button>
+                <button class="tab-btn" data-tab="pending-receptionists">Pending Receptionists</button>
+                <button class="tab-btn" data-tab="lab-technicians">Lab Technicians</button>
+                <button class="tab-btn" data-tab="pending-lab-technicians">Pending Lab Technicians</button>
                 <button class="tab-btn" data-tab="visits">User Visits</button>
                 <button class="tab-btn" data-tab="appointments">Appointments</button>
                 <button class="tab-btn" data-tab="prescriptions">Prescriptions</button>
@@ -350,6 +354,86 @@
                             <div class="loading">
                                 <i class="fas fa-spinner"></i>
                                 <p>Loading pending doctors data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receptionists Tab -->
+            <div class="tab-content" id="receptionists-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Receptionists List</h3>
+                        <button class="refresh-btn" onclick="loadData('receptionists')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="receptionists-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading receptionists data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Receptionists Tab -->
+            <div class="tab-content" id="pending-receptionists-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Pending Receptionists for Verification</h3>
+                        <button class="refresh-btn" onclick="loadData('pending-receptionists')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="pending-receptionists-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading pending receptionists data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lab Technicians Tab -->
+            <div class="tab-content" id="lab-technicians-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Lab Technicians List</h3>
+                        <button class="refresh-btn" onclick="loadData('lab-technicians')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="lab-technicians-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading lab technicians data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Lab Technicians Tab -->
+            <div class="tab-content" id="pending-lab-technicians-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Pending Lab Technicians for Verification</h3>
+                        <button class="refresh-btn" onclick="loadData('pending-lab-technicians')">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-container" id="pending-lab-technicians-data">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading pending lab technicians data...</p>
                             </div>
                         </div>
                     </div>
@@ -489,6 +573,18 @@
                     case 'pending-doctors':
                         endpoint = '/api/admin/pending-doctors';
                         break;
+                    case 'receptionists':
+                        endpoint = '/api/admin/receptionists';
+                        break;
+                    case 'pending-receptionists':
+                        endpoint = '/api/admin/pending-receptionists';
+                        break;
+                    case 'lab-technicians':
+                        endpoint = '/api/admin/lab-technicians';
+                        break;
+                    case 'pending-lab-technicians':
+                        endpoint = '/api/admin/pending-labTechnicians';
+                        break;
                     case 'visits':
                         endpoint = '/api/admin/visits';
                         break;
@@ -547,7 +643,7 @@
                     <thead>
                         <tr>
                             ${keys.map(key => `<th>${formatHeader(key)}</th>`).join('')}
-                            ${dataType === 'pending-doctors' ? '<th>Actions</th>' : ''}
+                            ${(dataType === 'pending-doctors' || dataType === 'pending-receptionists' || dataType === 'pending-lab-technicians') ? '<th>Actions</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -601,6 +697,22 @@
                     tableHTML += `
                         <td>
                             <button class="refresh-btn" onclick="verifyDoctor('${item.id}')">
+                                <i class="fas fa-check"></i> Verify
+                            </button>
+                        </td>
+                    `;
+                } else if (dataType === 'pending-receptionists') {
+                    tableHTML += `
+                        <td>
+                            <button class="refresh-btn" onclick="verifyReceptionist('${item.id}')">
+                                <i class="fas fa-check"></i> Verify
+                            </button>
+                        </td>
+                    `;
+                } else if (dataType === 'pending-lab-technicians') {
+                    tableHTML += `
+                        <td>
+                            <button class="refresh-btn" onclick="verifyLabTechnician('${item.id}')">
                                 <i class="fas fa-check"></i> Verify
                             </button>
                         </td>
@@ -724,6 +836,48 @@
                 loadData('doctors');
                 
                 alert('Doctor verified successfully!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Verify a receptionist
+        async function verifyReceptionist(receptionistId) {
+            try {
+                const response = await fetch(`/api/admin/verify-receptionist/${receptionistId}`, {
+                    method: 'PUT'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to verify receptionist');
+                }
+                
+                // Reload both pending receptionists and receptionists data
+                loadData('pending-receptionists');
+                loadData('receptionists');
+                
+                alert('Receptionist verified successfully!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Verify a lab technician
+        async function verifyLabTechnician(labTechnicianId) {
+            try {
+                const response = await fetch(`/api/admin/verify-labTechnician/${labTechnicianId}`, {
+                    method: 'PUT'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to verify lab technician');
+                }
+                
+                // Reload both pending lab technicians and lab technicians data
+                loadData('pending-lab-technicians');
+                loadData('lab-technicians');
+                
+                alert('Lab Technician verified successfully!');
             } catch (error) {
                 alert(`Error: ${error.message}`);
             }

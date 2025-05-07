@@ -256,6 +256,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+  
+  // Get receptionists (admin only)
+  app.get('/api/admin/receptionists', async (req, res) => {
+    try {
+      const allReceptionists = await db.query.receptionists.findMany();
+      res.json(allReceptionists);
+    } catch (error) {
+      console.error('Error getting receptionists:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // Get lab technicians (admin only)
+  app.get('/api/admin/lab-technicians', async (req, res) => {
+    try {
+      const allLabTechnicians = await db.query.labTechnicians.findMany();
+      res.json(allLabTechnicians);
+    } catch (error) {
+      console.error('Error getting lab technicians:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
   // Get patients list
   app.get('/api/patients', async (req, res) => {
