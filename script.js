@@ -2724,7 +2724,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         const todaysAppointments = appointments.filter(app => app.date === today);
         
-        // Sort today's appointments by status priority: In Progress, Scheduled, Completed
+        // Define status order for sorting - use for both today's appointments and all appointments
         const statusOrder = { 'In Progress': 0, 'Scheduled': 1, 'Completed': 2, 'Cancelled': 3 };
         todaysAppointments.sort((a, b) => {
             // Sort by status priority
@@ -2802,6 +2802,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 filteredAppointments = filteredAppointments.filter(app => 
                     app.date === dateFilter
                 );
+            }
+            
+            // Check if any appointments match the filters
+            if (filteredAppointments.length === 0) {
+                // No appointments match the filters
+                appsTable.innerHTML = '<tr><td colspan="6" class="text-center">No appointments match the current filters</td></tr>';
+                return; // Exit the function early
             }
             
             // Sort by status first: In Progress, Scheduled, Completed
