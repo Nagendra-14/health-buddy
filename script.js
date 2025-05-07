@@ -1191,6 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Patient-specific navigation links
             const patientLinks = [
                 { id: 'patientAppointments', label: 'Appointments', icon: 'fa-calendar-check' },
+                { id: 'patientPrescriptions', label: 'Prescriptions', icon: 'fa-pills' },
                 { id: 'patientReports', label: 'Reports', icon: 'fa-file-medical' }
             ];
             
@@ -1337,6 +1338,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load patients for prescription form
                 loadPatientsForPrescription();
             }
+            
+            if (pageId === 'patientPrescriptions' && currentUser && currentUser.type === 'patient') {
+                // Load prescriptions for the patient
+                loadPatientPrescriptions();
+            }
         }
         
         // Close sidebar on mobile after navigation
@@ -1356,6 +1362,7 @@ document.addEventListener('DOMContentLoaded', function() {
             patientAppointments: 'My Appointments',
             startTests: 'Start Tests',
             prescriptions: 'Prescriptions',
+            patientPrescriptions: 'My Prescriptions',
             doctorReports: 'Patient Reports',
             patientReports: 'My Reports'
         };
