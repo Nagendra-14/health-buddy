@@ -935,8 +935,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up navigation based on user type
     function setupNavigation() {
+        console.log("Setting up navigation for user type:", currentUser.type);
+        
+        // Ensure sidebar is visible
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.style.display = 'flex';
+            sidebar.style.transform = 'translateX(0)';
+            console.log("Sidebar display set to flex");
+        } else {
+            console.error("Sidebar element not found!");
+        }
+        
         const navLinksContainer = document.getElementById('navLinks');
+        if (!navLinksContainer) {
+            console.error("Navigation links container not found!");
+            return;
+        }
+        
+        // Clear existing links
         navLinksContainer.innerHTML = '';
+        console.log("Cleared existing navigation links");
         
         // Links that are shown to both doctors and patients
         const sharedLinks = [
@@ -944,6 +963,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
         
         if (currentUser.type === 'doctor') {
+            console.log("Setting up doctor navigation links");
             // Doctor-specific navigation links
             const doctorLinks = [
                 { id: 'doctorAppointments', label: 'Appointments', icon: 'fa-calendar-check' },
@@ -972,10 +992,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
             
+            console.log("Doctor navigation links added:", links.length);
+            
             // Load doctor data
             loadDoctorData();
             
         } else if (currentUser.type === 'patient') {
+            console.log("Setting up patient navigation links");
             // Patient-specific navigation links
             const patientLinks = [
                 { id: 'patientAppointments', label: 'Appointments', icon: 'fa-calendar-check' },
@@ -1002,9 +1025,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
             
+            console.log("Patient navigation links added:", links.length);
+            
             // Load patient data
             loadPatientData();
         }
+        
+        // Finally, update the user info in the sidebar
+        updateUserInfo();
     }
     
     // Navigate to a specific page

@@ -390,9 +390,9 @@ label {
     box-shadow: var(--shadow);
     transition: transform var(--transition);
     z-index: 1000;
-    display: flex;
+    display: flex !important; /* Force display regardless of other styles */
     flex-direction: column;
-    transform: translateX(0); /* Ensure sidebar is visible by default on desktop */
+    transform: translateX(0) !important; /* Force sidebar visibility by default */
 }
 
 .sidebar-header {
@@ -966,13 +966,13 @@ body.mobile-device .status-badge {
 /* Medium devices (tablets, 577px to 768px) */
 @media (max-width: 768px) {
     .sidebar {
-        transform: translateX(-100%); /* Only hide on mobile */
+        transform: translateX(-100%) !important; /* Only hide on mobile */
         width: 240px;
         z-index: 1100; /* Higher z-index to appear over content */
     }
     
     .sidebar.active {
-        transform: translateX(0);
+        transform: translateX(0) !important;
         box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Add shadow when sidebar is open */
     }
     
