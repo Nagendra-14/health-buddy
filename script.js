@@ -2063,6 +2063,121 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Function to load patient-specific prescriptions
+    async function loadPatientPrescriptions() {
+        try {
+            console.log('Loading patient prescriptions for patient ID:', currentUser.id);
+            
+            // Check if the patient prescriptions page exists, if not create it
+            if (!document.getElementById('patientPrescriptions')) {
+                createPatientPrescriptionsPage();
+            }
+            
+            // Fetch prescriptions data for this patient
+            const patientPrescriptions = await fetchPrescriptions(null, currentUser.id);
+            console.log('Fetched patient prescriptions:', patientPrescriptions);
+            
+            // Get the patient prescriptions table element
+            const patientPrescriptionsTable = document.getElementById('patientPrescriptionsTable');
+            
+            if (!patientPrescriptionsTable) {
+                console.error('Patient prescriptions table element not found!');
+                return;
+            }
+            
+            patientPrescriptionsTable.innerHTML = '';
+            
+            if (patientPrescriptions.length > 0) {
+                // Sort by date, most recent first
+                const sortedPrescriptions = [...patientPrescriptions].sort((a, b) => 
+                    new Date(b.validFrom) - new Date(a.validFrom)
+                );
+                
+                sortedPrescriptions.forEach(prescription => {
+                    const medicationNames = prescription.medications 
+                        ? prescription.medications.map(med => med.name).join(', ')
+                        : prescription.details || 'No medications listed';
+                        
+                    const tr = document.createElement('tr');
+                    tr.classList.add('clickable-row');
+                    tr.innerHTML = `
+                        <td>${prescription.doctorName}</td>
+                        <td>${prescription.diagnosis || 'Not specified'}</td>
+                        <td>${truncateText(medicationNames, 30)}</td>
+                        <td>${formatDate(prescription.validFrom)} - ${formatDate(prescription.validUntil)}</td>
+                        <td>
+                            <button class="btn btn-icon view-prescription" title="View Details"><i class="fas fa-eye"></i></button>
+                        </td>
+                    `;
+                    
+                    // Add event listener for view button
+                    tr.querySelector('.view-prescription').addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent row click event
+                        showPrescriptionDetails(prescription);
+                    });
+                    
+                    // Make entire row clickable
+                    tr.addEventListener('click', function() {
+                        showPrescriptionDetails(prescription);
+                    });
+                    
+                    patientPrescriptionsTable.appendChild(tr);
+                });
+            } else {
+                patientPrescriptionsTable.innerHTML = '<tr><td colspan="5" class="text-center">No prescriptions found</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading patient prescriptions:', error);
+            showToast('Error loading prescriptions. Please try again.', 'error');
+        }
+    }
+    
+    // Function to create the patient prescriptions page if it doesn't exist
+    function createPatientPrescriptionsPage() {
+        console.log('Creating patient prescriptions page');
+        
+        // Check if the page already exists
+        if (document.getElementById('patientPrescriptions')) {
+            console.log('Patient prescriptions page already exists');
+            return;
+        }
+        
+        // Create the page structure
+        const pageContainer = document.createElement('div');
+        pageContainer.id = 'patientPrescriptions';
+        pageContainer.className = 'content-page';
+        
+        pageContainer.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h2>My Prescriptions</h2>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Diagnosis</th>
+                                <th>Medications</th>
+                                <th>Valid Period</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientPrescriptionsTable">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        // Add the page to the main content
+        const mainContent = document.getElementById('mainContent');
+        mainContent.appendChild(pageContainer);
+        
+        console.log('Patient prescriptions page created successfully');
+    }
+    
     // Fetch reports data
     async function fetchReportsData(doctorId = null, patientId = null, category = null) {
         try {
