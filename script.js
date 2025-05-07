@@ -2525,6 +2525,84 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Load patients for test form
+    async function loadPatientsForTest() {
+        try {
+            console.log("Loading patients for test form");
+            // Get patients from API
+            const patients = await fetchPatients();
+            
+            // Populate select dropdown
+            const patientSelect = document.getElementById('testPatient');
+            if (patientSelect) {
+                patientSelect.innerHTML = '<option value="">Select Patient</option>';
+                
+                // Only show patients assigned to this doctor
+                let filteredPatients = patients;
+                if (currentUser && currentUser.type === 'doctor') {
+                    filteredPatients = patients.filter(p => p.doctorId === currentUser.id);
+                    if (filteredPatients.length === 0) {
+                        // If no patients are assigned to this doctor, show all patients
+                        filteredPatients = patients;
+                    }
+                }
+                
+                filteredPatients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = patient.name;
+                    patientSelect.appendChild(option);
+                });
+                
+                console.log(`Loaded ${filteredPatients.length} patients for test form`);
+            } else {
+                console.error("Test patient select element not found");
+            }
+        } catch (error) {
+            console.error('Error loading patients for test form:', error);
+            showToast('Failed to load patients for tests. Please try again.', 'error');
+        }
+    }
+    
+    // Load patients for prescription form
+    async function loadPatientsForPrescription() {
+        try {
+            console.log("Loading patients for prescription form");
+            // Get patients from API
+            const patients = await fetchPatients();
+            
+            // Populate select dropdown
+            const patientSelect = document.getElementById('prescriptionPatient');
+            if (patientSelect) {
+                patientSelect.innerHTML = '<option value="">Select Patient</option>';
+                
+                // Only show patients assigned to this doctor
+                let filteredPatients = patients;
+                if (currentUser && currentUser.type === 'doctor') {
+                    filteredPatients = patients.filter(p => p.doctorId === currentUser.id);
+                    if (filteredPatients.length === 0) {
+                        // If no patients are assigned to this doctor, show all patients
+                        filteredPatients = patients;
+                    }
+                }
+                
+                filteredPatients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = patient.name;
+                    patientSelect.appendChild(option);
+                });
+                
+                console.log(`Loaded ${filteredPatients.length} patients for prescription form`);
+            } else {
+                console.error("Prescription patient select element not found");
+            }
+        } catch (error) {
+            console.error('Error loading patients for prescription form:', error);
+            showToast('Failed to load patients for prescriptions. Please try again.', 'error');
+        }
+    }
+    
     // ===============================================================
     // UTILITY FUNCTIONS
     // ===============================================================
