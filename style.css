@@ -1419,3 +1419,34 @@ body.layout-expanded .main-content {
 #navLinks li a {
     display: flex !important;
 }
+/* Conflict warning display */
+.conflict-warning {
+    color: var(--danger);
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
+    background-color: rgba(244, 67, 54, 0.1);
+    border-left: 4px solid var(--danger);
+    margin-top: var(--spacing-md);
+}
+
+/* Action buttons in modals */
+.action-btn {
+    margin: 0 5px;
+}
+
+/* Conflict badge for appointment items */
+.conflict-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--danger);
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+}

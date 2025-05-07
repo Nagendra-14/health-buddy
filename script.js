@@ -1837,6 +1837,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function showAppointmentDetails(appointment) {
         const modal = document.getElementById('appointmentDetailsModal') || createAppointmentDetailsModal();
         
+        // Store the current appointment for edit/delete operations
+        modal._currentAppointment = appointment;
+        
         // Update modal content
         modal.querySelector('.modal-title').textContent = 'Appointment Details';
         
@@ -1844,16 +1847,288 @@ document.addEventListener('DOMContentLoaded', function() {
         modalBody.innerHTML = `
             <div class="appointment-details">
                 <p><strong>Doctor:</strong> ${appointment.doctorName}</p>
+                <p><strong>Patient:</strong> ${appointment.patientName}</p>
                 <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
                 <p><strong>Time:</strong> ${appointment.time}</p>
                 <p><strong>Purpose:</strong> ${appointment.purpose}</p>
                 <p><strong>Status:</strong> <span class="status-badge status-${appointment.status.toLowerCase().replace(' ', '-')}">${appointment.status}</span></p>
                 ${appointment.notes ? `<p><strong>Notes:</strong> ${appointment.notes}</p>` : ''}
+                ${appointment.hasConflict ? `<p class="conflict-warning"><strong>Warning:</strong> This appointment has a scheduling conflict!</p>` : ''}
             </div>
         `;
         
+        // Show edit/delete buttons for doctors
+        const modalFooter = modal.querySelector('.modal-footer');
+        const currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+        
+        // Clear previous action buttons
+        const existingActionButtons = modalFooter.querySelectorAll('.action-btn');
+        existingActionButtons.forEach(button => button.remove());
+        
+        // Show action buttons only for doctors viewing their own appointments
+        if (currentUser.type === 'doctor' && currentUser.id === appointment.doctorId) {
+            // Add Edit button
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'btn btn-primary action-btn';
+            editBtn.textContent = 'Edit';
+            editBtn.onclick = () => {
+                editAppointment(appointment);
+            };
+            
+            // Add Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-danger action-btn';
+            deleteBtn.textContent = 'Cancel Appointment';
+            deleteBtn.onclick = () => {
+                if (confirm('Are you sure you want to cancel this appointment?')) {
+                    deleteAppointment(appointment.id);
+                }
+            };
+            
+            // Insert buttons before the close button
+            modalFooter.insertBefore(editBtn, modalFooter.querySelector('.close-btn'));
+            modalFooter.insertBefore(deleteBtn, modalFooter.querySelector('.close-btn'));
+        }
+        
         // Display modal
         modal.style.display = 'block';
+    }
+    
+    // Edit an appointment
+    async function editAppointment(appointment) {
+        // Get the appointment details modal and hide it
+        const detailsModal = document.getElementById('appointmentDetailsModal');
+        if (detailsModal) {
+            detailsModal.style.display = 'none';
+        }
+        
+        // Create an edit modal if it doesn't exist
+        let editModal = document.getElementById('editAppointmentModal');
+        if (!editModal) {
+            editModal = document.createElement('div');
+            editModal.id = 'editAppointmentModal';
+            editModal.className = 'modal';
+            editModal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Edit Appointment</h2>
+                        <span class="close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editAppointmentForm">
+                            <div class="form-group">
+                                <label for="editAppointmentDate">Date</label>
+                                <input type="date" id="editAppointmentDate" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editAppointmentTime">Time</label>
+                                <select id="editAppointmentTime" class="form-control" required>
+                                    <!-- Time slots will be loaded dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editAppointmentPurpose">Purpose</label>
+                                <input type="text" id="editAppointmentPurpose" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editAppointmentStatus">Status</label>
+                                <select id="editAppointmentStatus" class="form-control" required>
+                                    <option value="Scheduled">Scheduled</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editAppointmentNotes">Notes</label>
+                                <textarea id="editAppointmentNotes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="saveAppointmentChanges">Save Changes</button>
+                        <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(editModal);
+            
+            // Add event listeners
+            const closeBtn = editModal.querySelector('.close');
+            const closeBtnFooter = editModal.querySelector('.close-btn');
+            
+            closeBtn.addEventListener('click', () => {
+                editModal.style.display = 'none';
+                // Show the details modal again
+                if (detailsModal) {
+                    detailsModal.style.display = 'block';
+                }
+            });
+            
+            closeBtnFooter.addEventListener('click', () => {
+                editModal.style.display = 'none';
+                // Show the details modal again
+                if (detailsModal) {
+                    detailsModal.style.display = 'block';
+                }
+            });
+            
+            // Close when clicking outside
+            window.addEventListener('click', (event) => {
+                if (event.target === editModal) {
+                    editModal.style.display = 'none';
+                    // Show the details modal again
+                    if (detailsModal) {
+                        detailsModal.style.display = 'block';
+                    }
+                }
+            });
+            
+            // Add save functionality
+            const saveBtn = editModal.querySelector('#saveAppointmentChanges');
+            saveBtn.addEventListener('click', async () => {
+                const appointmentId = editModal._currentAppointment.id;
+                const date = document.getElementById('editAppointmentDate').value;
+                const time = document.getElementById('editAppointmentTime').value;
+                const purpose = document.getElementById('editAppointmentPurpose').value;
+                const status = document.getElementById('editAppointmentStatus').value;
+                const notes = document.getElementById('editAppointmentNotes').value;
+                
+                if (!date || !time || !purpose || !status) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/appointments/${appointmentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            date,
+                            time,
+                            purpose,
+                            status,
+                            notes
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showToast('Appointment updated successfully', 'success');
+                        editModal.style.display = 'none';
+                        
+                        // Refresh the appointments
+                        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                        if (currentUser.type === 'doctor') {
+                            loadDoctorAppointments();
+                        } else {
+                            loadPatientAppointments();
+                        }
+                    } else {
+                        // Handle conflicts
+                        if (response.status === 409) {
+                            alert(`Conflict: ${data.message}`);
+                        } else {
+                            alert(`Error: ${data.message}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating appointment:', error);
+                    alert('An error occurred while updating the appointment.');
+                }
+            });
+        }
+        
+        // Populate form with current appointment data
+        editModal._currentAppointment = appointment;
+        document.getElementById('editAppointmentDate').value = appointment.date;
+        document.getElementById('editAppointmentPurpose').value = appointment.purpose;
+        document.getElementById('editAppointmentStatus').value = appointment.status;
+        document.getElementById('editAppointmentNotes').value = appointment.notes || '';
+        
+        // Load time slots
+        const timeSelect = document.getElementById('editAppointmentTime');
+        timeSelect.innerHTML = '';
+        
+        // Generate time slots from 8 AM to 5 PM
+        for (let hour = 8; hour < 17; hour++) {
+            const hour12 = hour > 12 ? hour - 12 : hour;
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            
+            // Add 00 minute slot
+            const option1 = document.createElement('option');
+            option1.value = `${hour}:00`;
+            option1.textContent = `${hour12}:00 ${ampm}`;
+            timeSelect.appendChild(option1);
+            
+            // Add 30 minute slot
+            const option2 = document.createElement('option');
+            option2.value = `${hour}:30`;
+            option2.textContent = `${hour12}:30 ${ampm}`;
+            timeSelect.appendChild(option2);
+        }
+        
+        // Set the current time
+        // Need to convert from "10:00 AM" format to "10:00" format for the select
+        const timeParts = appointment.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (timeParts) {
+            let hour = parseInt(timeParts[1]);
+            const minute = timeParts[2];
+            const ampm = timeParts[3].toUpperCase();
+            
+            // Convert to 24-hour format
+            if (ampm === 'PM' && hour < 12) {
+                hour += 12;
+            } else if (ampm === 'AM' && hour === 12) {
+                hour = 0;
+            }
+            
+            const timeValue = `${hour}:${minute}`;
+            timeSelect.value = timeValue;
+        }
+        
+        // Show the edit modal
+        editModal.style.display = 'block';
+    }
+    
+    // Delete an appointment
+    async function deleteAppointment(appointmentId) {
+        try {
+            const response = await fetch(`/api/appointments/${appointmentId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Appointment cancelled successfully', 'success');
+                
+                // Hide the modal
+                const modal = document.getElementById('appointmentDetailsModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                
+                // Refresh the appointments
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (currentUser.type === 'doctor') {
+                    loadDoctorAppointments();
+                } else {
+                    loadPatientAppointments();
+                }
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Error deleting appointment:', error);
+            alert('An error occurred while cancelling the appointment.');
+        }
     }
     
     // Function to directly show patient prescriptions page
