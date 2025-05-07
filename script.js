@@ -2459,7 +2459,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const editBtn = tr.querySelector('.edit-appointment');
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // Prevent row click
-                    
+                    editAppointment(app);
+                    /* 
+                    // OLD IMPLEMENTATION:
                     // Create a modal for editing the appointment
                     let modalHtml = `
                     <div id="editAppointmentModal" class="modal">
@@ -2614,13 +2616,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             showToast(error.message || 'Failed to update appointment', 'error');
                         }
                     });
+                    */
                 });
                 
                 const cancelBtn = tr.querySelector('.cancel-appointment');
                 cancelBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // Prevent row click
-                    showToast(`Cancelled appointment for ${app.patientName}`);
-                    // Cancellation code would go here
+                    if (confirm(`Are you sure you want to cancel the appointment for ${app.patientName}?`)) {
+                        deleteAppointment(app.id);
+                    }
                 });
             });
         } else {
@@ -3763,6 +3767,190 @@ document.addEventListener('DOMContentLoaded', function() {
     function truncateText(text, maxLength) {
         if (text.length <= maxLength) return text;
         return text.substr(0, maxLength) + '...';
+    }
+    
+    // Function to edit an appointment
+    async function editAppointment(appointment) {
+        // Create a modal for editing the appointment
+        let modalHtml = `
+        <div id="editAppointmentModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Edit Appointment</h2>
+                ${appointment.hasConflict ? `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    This appointment conflicts with ${appointment.conflictCount-1} other appointment(s) at the same time slot.
+                </div>` : ''}
+                <form id="editAppointmentForm">
+                    <div class="form-group">
+                        <label>Patient</label>
+                        <input type="text" value="${appointment.patientName}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="editAppointmentDate" value="${appointment.date}">
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <select id="editAppointmentTime">
+                            <option value="${appointment.time}" selected>${appointment.time}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editAppointmentStatus">
+                            <option value="Scheduled" ${appointment.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                            <option value="In Progress" ${appointment.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${appointment.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                            <option value="Cancelled" ${appointment.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="editAppointmentNotes">${appointment.notes || ''}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+        
+        // Add modal to the document
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = document.getElementById('editAppointmentModal');
+        modal.style.display = 'block';
+        
+        // Add event listeners for closing the modal
+        modal.querySelector('.close').addEventListener('click', () => {
+            modal.remove();
+        });
+        
+        modal.querySelector('.modal-close').addEventListener('click', () => {
+            modal.remove();
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Populate time slots when date changes
+        const dateInput = document.getElementById('editAppointmentDate');
+        const timeSelect = document.getElementById('editAppointmentTime');
+        
+        dateInput.addEventListener('change', async () => {
+            try {
+                // Clear and disable time select while loading
+                timeSelect.innerHTML = '<option value="">Loading...</option>';
+                timeSelect.disabled = true;
+                
+                // Get doctor's available time slots
+                const response = await fetch(`/api/available-time-slots?doctorId=${appointment.doctorId}&date=${dateInput.value}&appointmentId=${appointment.id}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch time slots');
+                }
+                
+                const timeSlots = await response.json();
+                
+                // Clear loading option
+                timeSelect.innerHTML = '';
+                
+                // Add current time as first option
+                const currentTimeOption = document.createElement('option');
+                currentTimeOption.value = appointment.time;
+                currentTimeOption.textContent = appointment.time;
+                timeSelect.appendChild(currentTimeOption);
+                
+                // Add available time slots
+                timeSlots.forEach(slot => {
+                    if (slot !== appointment.time) { // Skip current time slot as it's already added
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = slot;
+                        timeSelect.appendChild(option);
+                    }
+                });
+                
+                timeSelect.disabled = false;
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                timeSelect.innerHTML = '<option value="">Error loading time slots</option>';
+                timeSelect.disabled = false;
+            }
+        });
+        
+        // Handle form submission
+        const form = document.getElementById('editAppointmentForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const date = document.getElementById('editAppointmentDate').value;
+            const time = document.getElementById('editAppointmentTime').value;
+            const status = document.getElementById('editAppointmentStatus').value;
+            const notes = document.getElementById('editAppointmentNotes').value;
+            
+            try {
+                const response = await fetch(`/api/appointments/${appointment.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date,
+                        time,
+                        status,
+                        notes
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to update appointment');
+                }
+                
+                // Close modal
+                modal.remove();
+                
+                // Show success message
+                showToast('Appointment updated successfully', 'success');
+                
+                // Refresh appointments
+                loadDoctorAppointments();
+            } catch (error) {
+                console.error('Error updating appointment:', error);
+                showToast(error.message || 'Failed to update appointment', 'error');
+            }
+        });
+    }
+    
+    // Function to delete an appointment
+    async function deleteAppointment(appointmentId) {
+        try {
+            const response = await fetch(`/api/appointments/${appointmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to delete appointment');
+            }
+            
+            // Show success message
+            showToast('Appointment cancelled successfully', 'success');
+            
+            // Refresh appointments
+            loadDoctorAppointments();
+        } catch (error) {
+            console.error('Error deleting appointment:', error);
+            showToast(error.message || 'Failed to delete appointment', 'error');
+        }
     }
     
     // Function to create a new appointment
