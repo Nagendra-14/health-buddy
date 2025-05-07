@@ -76,6 +76,32 @@ export const pendingDoctors = pgTable('pending_doctors', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// Pending receptionists waiting for verification
+export const pendingReceptionists = pgTable('pending_receptionists', {
+  id: text('id').primaryKey(), // Using the format 'R001'
+  name: text('name').notNull(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  contact: text('contact'),
+  email: text('email'),
+  department: text('department'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Pending lab technicians waiting for verification
+export const pendingLabTechnicians = pgTable('pending_lab_technicians', {
+  id: text('id').primaryKey(), // Using the format 'L001'
+  name: text('name').notNull(),
+  username: text('username').notNull().unique(), 
+  password: text('password').notNull(),
+  specialization: text('specialization'),
+  contact: text('contact'),
+  email: text('email'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
 // Appointments table
 export const appointments = pgTable('appointments', {
   id: text('id').primaryKey(), // Using the existing format like 'A001'
@@ -202,3 +228,11 @@ export type Receptionist = typeof receptionists.$inferSelect;
 export const labTechnicianInsertSchema = createInsertSchema(labTechnicians);
 export type LabTechnicianInsert = z.infer<typeof labTechnicianInsertSchema>;
 export type LabTechnician = typeof labTechnicians.$inferSelect;
+
+export const pendingReceptionistInsertSchema = createInsertSchema(pendingReceptionists);
+export type PendingReceptionistInsert = z.infer<typeof pendingReceptionistInsertSchema>;
+export type PendingReceptionist = typeof pendingReceptionists.$inferSelect;
+
+export const pendingLabTechnicianInsertSchema = createInsertSchema(pendingLabTechnicians);
+export type PendingLabTechnicianInsert = z.infer<typeof pendingLabTechnicianInsertSchema>;
+export type PendingLabTechnician = typeof pendingLabTechnicians.$inferSelect;

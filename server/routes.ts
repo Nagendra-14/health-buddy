@@ -234,6 +234,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+  
+  // Get pending receptionists (admin only)
+  app.get('/api/admin/pending-receptionists', async (req, res) => {
+    try {
+      const pendingReceptionists = await db.query.pendingReceptionists.findMany();
+      res.json(pendingReceptionists);
+    } catch (error) {
+      console.error('Error getting pending receptionists:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // Get pending lab technicians (admin only)
+  app.get('/api/admin/pending-labTechnicians', async (req, res) => {
+    try {
+      const pendingLabTechnicians = await db.query.pendingLabTechnicians.findMany();
+      res.json(pendingLabTechnicians);
+    } catch (error) {
+      console.error('Error getting pending lab technicians:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
   // Get patients list
   app.get('/api/patients', async (req, res) => {
@@ -359,6 +381,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API endpoint to register a new receptionist (pending verification)
+  app.post('/api/register/receptionist', async (req, res) => {
+    try {
+      const { username, password, name, email, contact, department } = req.body;
+      
+      // Check if username already exists
+      const existingReceptionist = await db.query.receptionists.findFirst({
+        where: eq(receptionists.username, username)
+      });
+      
+      // Also check pending receptionists
+      const existingPendingReceptionist = await db.query.pendingReceptionists.findFirst({
+        where: eq(pendingReceptionists.username, username)
+      });
+      
+      if (existingReceptionist || existingPendingReceptionist) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+      
+      // Generate a new ID based on the highest existing ID
+      const allReceptionistsResult = await db.query.receptionists.findMany();
+      const pendingReceptionistsResult = await db.query.pendingReceptionists.findMany();
+      
+      // Extract IDs and find the highest one
+      const allReceptionistIds = [...allReceptionistsResult, ...pendingReceptionistsResult]
+        .map(r => parseInt(r.id.substring(1)))
+        .filter(id => !isNaN(id));
+      
+      const lastId = allReceptionistIds.length > 0 ? Math.max(...allReceptionistIds) : 0;
+      const newId = `R${String(lastId + 1).padStart(3, '0')}`;
+      
+      // Create new receptionist object
+      const newReceptionist = {
+        id: newId,
+        name,
+        username,
+        password,
+        department,
+        contact,
+        email,
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+      };
+      
+      // Add to pending receptionists list
+      await db.insert(pendingReceptionists).values(newReceptionist);
+      
+      // Return success
+      res.status(201).json({ 
+        message: 'Receptionist registration submitted for verification', 
+        receptionist: { ...newReceptionist, password: undefined } 
+      });
+    } catch (error) {
+      console.error('Error registering receptionist:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // API endpoint to register a new lab technician (pending verification)
+  app.post('/api/register/labTechnician', async (req, res) => {
+    try {
+      const { username, password, name, email, contact, specialization } = req.body;
+      
+      // Check if username already exists
+      const existingLabTechnician = await db.query.labTechnicians.findFirst({
+        where: eq(labTechnicians.username, username)
+      });
+      
+      // Also check pending lab technicians
+      const existingPendingLabTechnician = await db.query.pendingLabTechnicians.findFirst({
+        where: eq(pendingLabTechnicians.username, username)
+      });
+      
+      if (existingLabTechnician || existingPendingLabTechnician) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+      
+      // Generate a new ID based on the highest existing ID
+      const allLabTechniciansResult = await db.query.labTechnicians.findMany();
+      const pendingLabTechniciansResult = await db.query.pendingLabTechnicians.findMany();
+      
+      // Extract IDs and find the highest one
+      const allLabTechnicianIds = [...allLabTechniciansResult, ...pendingLabTechniciansResult]
+        .map(l => parseInt(l.id.substring(1)))
+        .filter(id => !isNaN(id));
+      
+      const lastId = allLabTechnicianIds.length > 0 ? Math.max(...allLabTechnicianIds) : 0;
+      const newId = `L${String(lastId + 1).padStart(3, '0')}`;
+      
+      // Create new lab technician object
+      const newLabTechnician = {
+        id: newId,
+        name,
+        username,
+        password,
+        specialization,
+        contact,
+        email,
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+      };
+      
+      // Add to pending lab technicians list
+      await db.insert(pendingLabTechnicians).values(newLabTechnician);
+      
+      // Return success
+      res.status(201).json({ 
+        message: 'Lab Technician registration submitted for verification', 
+        labTechnician: { ...newLabTechnician, password: undefined } 
+      });
+    } catch (error) {
+      console.error('Error registering lab technician:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
   // API endpoint to verify a doctor (admin only)
   app.put('/api/admin/verify-doctor/:doctorId', async (req, res) => {
     try {
@@ -385,6 +521,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: 'Doctor verified successfully' });
     } catch (error) {
       console.error('Error verifying doctor:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // API endpoint to verify a receptionist (admin only)
+  app.put('/api/admin/verify-receptionist/:receptionistId', async (req, res) => {
+    try {
+      const { receptionistId } = req.params;
+      
+      // Find the receptionist in pending list
+      const pendingReceptionist = await db.query.pendingReceptionists.findFirst({
+        where: eq(pendingReceptionists.id, receptionistId)
+      });
+      
+      if (!pendingReceptionist) {
+        return res.status(404).json({ message: 'Receptionist not found in pending list' });
+      }
+      
+      // Insert into verified receptionists
+      await db.insert(receptionists).values(pendingReceptionist);
+      
+      // Remove from pending receptionists
+      await db.delete(pendingReceptionists).where(eq(pendingReceptionists.id, receptionistId));
+      
+      res.status(200).json({ message: 'Receptionist verified successfully' });
+    } catch (error) {
+      console.error('Error verifying receptionist:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // API endpoint to verify a lab technician (admin only)
+  app.put('/api/admin/verify-labTechnician/:labTechnicianId', async (req, res) => {
+    try {
+      const { labTechnicianId } = req.params;
+      
+      // Find the lab technician in pending list
+      const pendingLabTechnician = await db.query.pendingLabTechnicians.findFirst({
+        where: eq(pendingLabTechnicians.id, labTechnicianId)
+      });
+      
+      if (!pendingLabTechnician) {
+        return res.status(404).json({ message: 'Lab Technician not found in pending list' });
+      }
+      
+      // Insert into verified lab technicians
+      await db.insert(labTechnicians).values(pendingLabTechnician);
+      
+      // Remove from pending lab technicians
+      await db.delete(pendingLabTechnicians).where(eq(pendingLabTechnicians.id, labTechnicianId));
+      
+      res.status(200).json({ message: 'Lab Technician verified successfully' });
+    } catch (error) {
+      console.error('Error verifying lab technician:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -432,6 +622,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Return patient with password removed
         const { password: _, ...patientWithoutPassword } = patient;
         return res.status(200).json(patientWithoutPassword);
+      } else if (userType === 'receptionist') {
+        // Find receptionist by username
+        const receptionist = await db.query.receptionists.findFirst({
+          where: eq(receptionists.username, username)
+        });
+        
+        if (!receptionist || receptionist.password !== password) {
+          // Check if it's in pending receptionists
+          const pendingReceptionist = await db.query.pendingReceptionists.findFirst({
+            where: eq(pendingReceptionists.username, username)
+          });
+          
+          if (pendingReceptionist && pendingReceptionist.password === password) {
+            return res.status(401).json({ message: 'Your account is pending verification by our administrators. Please check back later.' });
+          }
+          
+          return res.status(401).json({ message: 'Invalid username or password' });
+        }
+        
+        // Record this login
+        await db.insert(userVisits).values({
+          userId: receptionist.id,
+          timestamp: new Date()
+        });
+        
+        // Return receptionist with password removed
+        const { password: _, ...receptionistWithoutPassword } = receptionist;
+        return res.status(200).json(receptionistWithoutPassword);
+      } else if (userType === 'labTechnician') {
+        // Find lab technician by username
+        const labTechnician = await db.query.labTechnicians.findFirst({
+          where: eq(labTechnicians.username, username)
+        });
+        
+        if (!labTechnician || labTechnician.password !== password) {
+          // Check if it's in pending lab technicians
+          const pendingLabTechnician = await db.query.pendingLabTechnicians.findFirst({
+            where: eq(pendingLabTechnicians.username, username)
+          });
+          
+          if (pendingLabTechnician && pendingLabTechnician.password === password) {
+            return res.status(401).json({ message: 'Your account is pending verification by our administrators. Please check back later.' });
+          }
+          
+          return res.status(401).json({ message: 'Invalid username or password' });
+        }
+        
+        // Record this login
+        await db.insert(userVisits).values({
+          userId: labTechnician.id,
+          timestamp: new Date()
+        });
+        
+        // Return lab technician with password removed
+        const { password: _, ...labTechnicianWithoutPassword } = labTechnician;
+        return res.status(200).json(labTechnicianWithoutPassword);
       } else {
         return res.status(400).json({ message: 'Invalid user type' });
       }

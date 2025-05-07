@@ -410,7 +410,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // API function to register a new user
     async function registerUser(userData) {
         try {
-            const endpoint = userData.userType === 'doctor' ? '/api/register/doctor' : '/api/register/patient';
+            let endpoint;
+            
+            // Set the appropriate API endpoint based on user type
+            switch (userData.userType) {
+                case 'doctor':
+                    endpoint = '/api/register/doctor';
+                    break;
+                case 'patient':
+                    endpoint = '/api/register/patient';
+                    break;
+                case 'receptionist':
+                    endpoint = '/api/register/receptionist';
+                    break;
+                case 'labTechnician':
+                    endpoint = '/api/register/labTechnician';
+                    break;
+                default:
+                    throw new Error('Invalid user type');
+            }
+            
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
