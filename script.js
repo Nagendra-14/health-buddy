@@ -117,9 +117,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // Convert medications array to JSON string if it's an array
             let processedData = { ...prescriptionData };
             
-            // Make sure diagnoses is included
-            if (!processedData.diagnosis && processedData.details) {
-                processedData.diagnosis = processedData.details;
+            // Add date field if not present
+            if (!processedData.date) {
+                processedData.date = new Date().toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+            }
+            
+            // Make sure diagnosis is included - this is required by the database schema
+            if (!processedData.diagnosis) {
+                if (processedData.details) {
+                    processedData.diagnosis = processedData.details;
+                } else {
+                    processedData.diagnosis = "General prescription"; // Default value if no diagnosis or details
+                }
             }
             
             // Ensure medications are properly formatted as a JSON string
@@ -932,7 +945,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 medications,
                 validFrom,
                 validUntil,
-                details: medications.length === 0 ? prescriptionDetails : null // Fallback if parsing failed
+                details: medications.length === 0 ? prescriptionDetails : null, // Fallback if parsing failed
+                diagnosis: document.getElementById('prescriptionNotes').value || "General prescription" // Use notes as diagnosis or default value
             };
             
             // Submit prescription via API
