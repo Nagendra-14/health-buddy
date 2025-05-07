@@ -1,22 +1,37 @@
 // Helper functions
-// Show toast notification
+// Show toast notification - will call the main script's toast queue function
 function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
+    // If the main script has a toast queue function, use that
+    if (window.toastQueue) {
+        // This means we're in the main script context with the queue
+        window.toastQueue.push({ message, type });
+        if (!window.isShowingToast) {
+            window.processToastQueue();
+        }
+        return;
+    }
     
-    const toastMessage = toast.querySelector('.toast-message');
-    if (!toastMessage) return;
-    
-    // Set message and type
-    toastMessage.textContent = message;
-    toast.className = 'toast';
-    toast.classList.add(type);
-    toast.classList.add('show');
-    
-    // Hide after 3 seconds
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
+    // Fallback if queue isn't available
+    try {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        
+        const toastMessage = toast.querySelector('.toast-message');
+        if (!toastMessage) return;
+        
+        // Set message and type
+        toastMessage.textContent = message;
+        toast.className = 'toast';
+        toast.classList.add(type);
+        toast.classList.add('show');
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    } catch (error) {
+        console.error('Error showing toast in user-role-functions:', error);
+    }
 }
 
 // Format date into a readable string

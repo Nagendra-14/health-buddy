@@ -1848,34 +1848,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Toast queue for managing multiple notifications
+    window.toastQueue = [];
+    window.isShowingToast = false;
+    
     // Show toast notification
     function showToast(message, type = 'success') {
         try {
-            const toast = document.getElementById('toast');
-            if (!toast) {
-                console.error('Toast element not found');
-                return;
-            }
+            // Add the toast to the queue
+            window.toastQueue.push({ message, type });
             
-            const toastMessage = toast.querySelector('.toast-message');
-            if (!toastMessage) {
-                console.error('Toast message element not found');
-                return;
+            // If no toast is currently showing, process the queue
+            if (!window.isShowingToast) {
+                window.processToastQueue();
             }
-            
+        } catch (error) {
+            console.error('Error showing toast:', error);
+        }
+    }
+    
+    // Process the toast queue
+    window.processToastQueue = function() {
+        // If the queue is empty or already showing a toast, do nothing
+        if (window.toastQueue.length === 0 || window.isShowingToast) {
+            return;
+        }
+        
+        // Mark as showing a toast
+        window.isShowingToast = true;
+        
+        // Get the next toast
+        const { message, type } = window.toastQueue.shift();
+        
+        const toast = document.getElementById('toast');
+        if (!toast) {
+            console.error('Toast element not found');
+            window.isShowingToast = false;
+            window.processToastQueue(); // Try the next toast
+            return;
+        }
+        
+        const toastMessage = toast.querySelector('.toast-message');
+        if (!toastMessage) {
+            console.error('Toast message element not found');
+            window.isShowingToast = false;
+            window.processToastQueue(); // Try the next toast
+            return;
+        }
+        
+        // Clear any existing toast
+        toast.classList.remove('show');
+        toast.classList.remove('success', 'error', 'info', 'warning');
+        
+        // Set up the new toast after a brief delay to ensure animations reset
+        setTimeout(() => {
             // Set message and type
             toastMessage.textContent = message;
             toast.className = 'toast';
             toast.classList.add(type);
             toast.classList.add('show');
             
-            // Hide after 3 seconds
+            // Hide after 3 seconds and process the next toast
             setTimeout(() => {
                 toast.classList.remove('show');
+                
+                // Give time for hide animation to complete
+                setTimeout(() => {
+                    window.isShowingToast = false;
+                    window.processToastQueue(); // Process the next toast in queue
+                }, 300);
             }, 3000);
-        } catch (error) {
-            console.error('Error showing toast:', error);
-        }
+        }, 100);
     }
     
     // ===============================================================
