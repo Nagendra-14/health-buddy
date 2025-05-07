@@ -1875,6 +1875,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Set up toast close button functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const toastCloseBtn = document.querySelector('.toast-close');
+        if (toastCloseBtn) {
+            toastCloseBtn.addEventListener('click', function() {
+                const toast = document.getElementById('toast');
+                if (toast) {
+                    toast.classList.remove('show');
+                    
+                    // Reset the toast state after animation
+                    setTimeout(() => {
+                        window.isShowingToast = false;
+                        window.processToastQueue(); // Process any queued toasts
+                    }, 300);
+                }
+            });
+        }
+    });
+    
     // Process the toast queue
     window.processToastQueue = function() {
         // If the queue is empty or already showing a toast, do nothing
@@ -1904,6 +1923,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Get the success and error icons
+        const successIcon = toast.querySelector('.toast-icon.success');
+        const errorIcon = toast.querySelector('.toast-icon.error');
+        
+        if (!successIcon || !errorIcon) {
+            console.error('Toast icons not found');
+        }
+        
         // Clear any existing toast
         toast.classList.remove('show');
         toast.classList.remove('success', 'error', 'info', 'warning');
@@ -1915,6 +1942,21 @@ document.addEventListener('DOMContentLoaded', function() {
             toast.className = 'toast';
             toast.classList.add(type);
             toast.classList.add('show');
+            
+            // Show only the appropriate icon
+            if (successIcon && errorIcon) {
+                if (type === 'success') {
+                    successIcon.style.display = 'block';
+                    errorIcon.style.display = 'none';
+                } else if (type === 'error') {
+                    successIcon.style.display = 'none';
+                    errorIcon.style.display = 'block';
+                } else {
+                    // For other types like 'info' or 'warning', hide both icons
+                    successIcon.style.display = 'none';
+                    errorIcon.style.display = 'none';
+                }
+            }
             
             // Hide after 3 seconds and process the next toast
             setTimeout(() => {

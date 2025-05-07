@@ -19,11 +19,30 @@ function showToast(message, type = 'success') {
         const toastMessage = toast.querySelector('.toast-message');
         if (!toastMessage) return;
         
+        // Get the success and error icons
+        const successIcon = toast.querySelector('.toast-icon.success');
+        const errorIcon = toast.querySelector('.toast-icon.error');
+        
         // Set message and type
         toastMessage.textContent = message;
         toast.className = 'toast';
         toast.classList.add(type);
         toast.classList.add('show');
+        
+        // Show only the appropriate icon
+        if (successIcon && errorIcon) {
+            if (type === 'success') {
+                successIcon.style.display = 'block';
+                errorIcon.style.display = 'none';
+            } else if (type === 'error') {
+                successIcon.style.display = 'none';
+                errorIcon.style.display = 'block';
+            } else {
+                // For other types like 'info' or 'warning', hide both icons
+                successIcon.style.display = 'none';
+                errorIcon.style.display = 'none';
+            }
+        }
         
         // Hide after 3 seconds
         setTimeout(() => {
