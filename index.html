@@ -500,17 +500,18 @@
                         </div>
                         <div class="filter-row">
                             <div class="search-box">
-                                <input type="text" placeholder="Search patient..." class="form-control">
-                                <i class="fas fa-search"></i>
+                                <input type="text" id="doctorAppointmentSearch" placeholder="Search patient..." class="form-control">
+                                <button id="doctorAppointmentSearchBtn" class="btn btn-icon"><i class="fas fa-search"></i></button>
                             </div>
                             <div class="filter-controls">
-                                <select class="form-control">
+                                <select id="doctorAppointmentStatusFilter" class="form-control">
                                     <option value="all">All Status</option>
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Scheduled">Scheduled</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
                                 </select>
-                                <input type="date" class="form-control">
+                                <input type="date" id="doctorAppointmentDateFilter" class="form-control">
                             </div>
                         </div>
                         <div class="card-body">
