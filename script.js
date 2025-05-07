@@ -679,8 +679,28 @@ document.addEventListener('DOMContentLoaded', function() {
             doctors.forEach(doctor => {
                 const option = document.createElement('option');
                 option.value = doctor.id;
-                option.textContent = doctor.name;
+                // Include specialty information if available
+                if (doctor.specialty && doctor.specialty.trim() !== '') {
+                    option.textContent = `${doctor.name} (${doctor.specialty})`;
+                } else {
+                    option.textContent = doctor.name;
+                }
                 doctorSelect.appendChild(option);
+            });
+            
+            // Add event listener to display doctor info when selected
+            doctorSelect.addEventListener('change', function() {
+                const selectedDoctorId = this.value;
+                if (!selectedDoctorId) return;
+                
+                const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+                if (selectedDoctor) {
+                    const infoElement = document.getElementById('doctorSpecialtyInfo');
+                    if (infoElement) {
+                        infoElement.textContent = selectedDoctor.specialty || 'General Practitioner';
+                        infoElement.parentElement.style.display = 'block';
+                    }
+                }
             });
         } catch (error) {
             console.error('Error loading doctors:', error);
