@@ -1763,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // API function to fetch test types
     async function fetchTestTypes() {
         try {
-            const response = await fetch('/api/tests');
+            const response = await fetch('/api/test-types');
             if (!response.ok) {
                 throw new Error('Failed to fetch test types');
             }
@@ -1793,24 +1793,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (testTypeSelect) {
                 testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
                 
-                // Add common test types
-                const testTypes = [
-                    { id: 'CBC', name: 'Complete Blood Count' },
-                    { id: 'LP', name: 'Lipid Panel' },
-                    { id: 'UA', name: 'Urinalysis' },
-                    { id: 'MRI', name: 'MRI Scan' },
-                    { id: 'XRAY', name: 'X-Ray' },
-                    { id: 'ECG', name: 'Electrocardiogram' },
-                    { id: 'CT', name: 'CT Scan' },
-                    { id: 'TFT', name: 'Thyroid Function Test' }
-                ];
-                
-                testTypes.forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type.id;
-                    option.textContent = type.name;
-                    testTypeSelect.appendChild(option);
-                });
+                // Get test types from API
+                try {
+                    const testTypesData = await fetchTestTypes();
+                    if (testTypesData && testTypesData.length > 0) {
+                        testTypesData.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type;
+                            testTypeSelect.appendChild(option);
+                        });
+                    } else {
+                        console.error('No test types returned from API');
+                    }
+                } catch (error) {
+                    console.error('Error fetching test types:', error);
+                }
             }
             
             // Populate dashboard pending tests section

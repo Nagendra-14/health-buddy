@@ -653,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new test
   app.post('/api/tests', async (req, res) => {
     try {
-      const { patientId, patientName, doctorId, doctorName, testType, results, notes } = req.body;
+      let { patientId, patientName, doctorId, doctorName, testType, results, notes } = req.body;
       
       // Verify that the doctor exists
       const doctor = await db.query.doctors.findFirst({
