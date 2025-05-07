@@ -1204,6 +1204,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update active navigation link
             updateActiveNavLink(pageId);
+            
+            // Initialize specific page components
+            if (pageId === 'startTests' && currentUser && currentUser.type === 'doctor') {
+                // Load patients for test form
+                loadPatientsForTest();
+            }
+            
+            if (pageId === 'prescriptions' && currentUser && currentUser.type === 'doctor') {
+                // Load patients for prescription form
+                loadPatientsForPrescription();
+            }
         }
         
         // Close sidebar on mobile after navigation
