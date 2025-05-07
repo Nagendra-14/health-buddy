@@ -429,16 +429,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doctorId = req.query.doctorId as string;
       const patientId = req.query.patientId as string;
       
-      let query = db.select().from(appointments);
-      
-      // Filter appointments by doctorId if provided
+      // Create query based on filters
       if (doctorId) {
-        query = db.select().from(appointments).where(eq(appointments.doctorId, doctorId));
-      }
-      
-      // Filter appointments by patientId if provided
-      if (patientId) {
-        query = db.select().from(appointments).where(eq(appointments.patientId, patientId));
+        const result = await db.query.appointments.findMany({
+          where: eq(appointments.doctorId, doctorId)
+        });
+        return res.json(result);
+      } else if (patientId) {
+        const result = await db.query.appointments.findMany({
+          where: eq(appointments.patientId, patientId)
+        });
+        return res.json(result);
+      } else {
+        // Return all appointments if no filter is provided
+        const result = await db.query.appointments.findMany();
+        return res.json(result);
       }
       
       // Execute the query

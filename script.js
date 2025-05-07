@@ -542,6 +542,128 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.classList.toggle('active');
     });
     
+    // Appointment Request Button - show modal when clicked
+    const requestAppointmentBtn = document.getElementById('requestAppointmentBtn');
+    if (requestAppointmentBtn) {
+        requestAppointmentBtn.addEventListener('click', function() {
+            // Set current date as minimum date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').min = today;
+            document.getElementById('appointmentDate').value = today;
+            
+            // Set default time
+            document.getElementById('appointmentTime').value = '09:00';
+            
+            // Load doctors list
+            loadDoctorsForAppointment();
+            
+            // Show modal
+            const modal = document.getElementById('appointmentRequestModal');
+            modal.style.display = 'block';
+        });
+    }
+    
+    // Function to load doctors for appointment request
+    async function loadDoctorsForAppointment() {
+        try {
+            const response = await fetch('/api/doctors');
+            if (!response.ok) {
+                throw new Error('Failed to fetch doctors');
+            }
+            
+            const doctors = await response.json();
+            const doctorSelect = document.getElementById('appointmentDoctor');
+            
+            // Clear existing options except the first one
+            while (doctorSelect.options.length > 1) {
+                doctorSelect.remove(1);
+            }
+            
+            // Add doctor options
+            doctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = doctor.name;
+                doctorSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading doctors:', error);
+            showToast('Error loading doctors. Please try again.', 'error');
+        }
+    }
+    
+    // Close modal when clicking the close button or outside the modal
+    document.querySelectorAll('.modal .close, .modal .modal-close').forEach(elem => {
+        elem.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            modal.style.display = 'none';
+        });
+    });
+    
+    // Close modal when clicking outside the modal content
+    window.addEventListener('click', function(e) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+    
+    // Appointment Request Form Submission
+    const appointmentRequestForm = document.getElementById('appointmentRequestForm');
+    if (appointmentRequestForm) {
+        appointmentRequestForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const doctorId = document.getElementById('appointmentDoctor').value;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            const purpose = document.getElementById('appointmentPurpose').value;
+            const notes = document.getElementById('appointmentNotes').value;
+            
+            // Show loading indicator
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Create appointment data
+                const appointmentData = {
+                    patientId: currentUser.id,
+                    doctorId: doctorId,
+                    date: date,
+                    time: time,
+                    purpose: purpose,
+                    notes: notes,
+                    status: 'Scheduled'
+                };
+                
+                // Submit request
+                const result = await createAppointment(appointmentData);
+                
+                // Close modal and show success message
+                document.getElementById('appointmentRequestModal').style.display = 'none';
+                showToast('Appointment requested successfully!', 'success');
+                
+                // Reset form
+                this.reset();
+                
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            } catch (error) {
+                console.error('Error requesting appointment:', error);
+                showToast('Error requesting appointment. Please try again.', 'error');
+                
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+    
     // Close sidebar when clicking outside on mobile
     document.addEventListener('click', function(e) {
         const sidebar = document.getElementById('sidebar');
