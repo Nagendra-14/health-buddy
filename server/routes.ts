@@ -894,6 +894,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get available time slots for appointment scheduling
+  app.get('/api/available-time-slots', async (req, res) => {
+    try {
+      const doctorId = req.query.doctorId as string;
+      const date = req.query.date as string;
+      const appointmentId = req.query.appointmentId as string; // Optional for excluding current appointment when editing
+      
+      if (!doctorId || !date) {
+        return res.status(400).json({ message: 'doctorId and date are required parameters' });
+      }
+      
+      // Get all appointments for the doctor on the requested date
+      const doctorAppointments = await db.query.appointments.findMany({
+        where: and(
+          eq(appointments.doctorId, doctorId),
+          eq(appointments.date, date)
+        )
+      });
+      
+      // Generate all possible 30-minute slots from 8:00 to 17:00
+      const allTimeSlots = [];
+      for (let hour = 8; hour < 17; hour++) {
+        allTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+        allTimeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+      }
+      
+      // Find booked slots (filter out cancelled appointments and current appointment if editing)
+      const bookedTimeSlots = doctorAppointments
+        .filter(app => app.status !== 'Cancelled' && (!appointmentId || app.id !== appointmentId))
+        .map(app => app.time);
+      
+      // Filter out booked slots
+      const availableTimeSlots = allTimeSlots.filter(slot => !bookedTimeSlots.includes(slot));
+      
+      res.json(availableTimeSlots);
+    } catch (error) {
+      console.error('Error getting available time slots:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Get available test types
   app.get('/api/test-types', (req, res) => {
     // Sample test types
