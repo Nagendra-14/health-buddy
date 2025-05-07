@@ -392,6 +392,7 @@ label {
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    transform: translateX(0); /* Ensure sidebar is visible by default on desktop */
 }
 
 .sidebar-header {
@@ -965,7 +966,7 @@ body.mobile-device .status-badge {
 /* Medium devices (tablets, 577px to 768px) */
 @media (max-width: 768px) {
     .sidebar {
-        transform: translateX(-100%);
+        transform: translateX(-100%); /* Only hide on mobile */
         width: 240px;
         z-index: 1100; /* Higher z-index to appear over content */
     }
