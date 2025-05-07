@@ -615,12 +615,31 @@ document.addEventListener('DOMContentLoaded', function() {
         appointmentRequestForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            console.log('Appointment request form submitted');
+            
             // Get form data
-            const doctorId = document.getElementById('appointmentDoctor').value;
+            const doctorSelect = document.getElementById('appointmentDoctor');
+            const doctorId = doctorSelect.value;
             const date = document.getElementById('appointmentDate').value;
             const time = document.getElementById('appointmentTime').value;
             const purpose = document.getElementById('appointmentPurpose').value;
             const notes = document.getElementById('appointmentNotes').value;
+            
+            console.log('Form fields:', {
+                doctorId, 
+                doctorOptions: Array.from(doctorSelect.options).map(o => ({value: o.value, text: o.text})),
+                date, 
+                time, 
+                purpose, 
+                notes, 
+                currentUser
+            });
+            
+            // Validate required fields
+            if (!doctorId || !date || !time) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
             
             // Show loading indicator
             const submitBtn = this.querySelector('button[type="submit"]');
@@ -635,10 +654,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     doctorId: doctorId,
                     date: date,
                     time: time,
-                    purpose: purpose,
-                    notes: notes,
+                    purpose: purpose || 'General Consultation',
+                    notes: notes || '',
                     status: 'Scheduled'
                 };
+                
+                console.log('Submitting appointment data:', appointmentData);
                 
                 // Submit request
                 const result = await createAppointment(appointmentData);
@@ -2162,6 +2183,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to create a new appointment
     async function createAppointment(appointmentData) {
         try {
+            console.log('Creating appointment with data:', appointmentData);
+            
             const response = await fetch('/api/appointments', {
                 method: 'POST',
                 headers: {
@@ -2170,11 +2193,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(appointmentData)
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to create appointment');
+            const responseText = await response.text();
+            let result;
+            
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Error parsing response:', responseText);
+                throw new Error('Invalid response from server');
             }
             
-            const result = await response.json();
+            if (!response.ok) {
+                console.error('Server returned error:', result);
+                throw new Error(result.message || 'Failed to create appointment');
+            }
+            
+            console.log('Appointment created successfully:', result);
             
             // Reload appointments after creating a new one
             if (currentUser.type === 'doctor') {
