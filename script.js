@@ -1008,12 +1008,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     upcomingAppointments.forEach(app => {
                         const tr = document.createElement('tr');
+                        tr.classList.add('clickable-row');
                         tr.innerHTML = `
                             <td>${app.doctorName}</td>
                             <td>${formatDate(app.date)}</td>
                             <td>${app.time}</td>
                             <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                         `;
+                        // Make row clickable to show appointment details
+                        tr.addEventListener('click', () => {
+                            showAppointmentDetails(app);
+                        });
                         dashboardAppsList.appendChild(tr);
                     });
                 } else {
@@ -1029,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     appointments.forEach(app => {
                         const tr = document.createElement('tr');
+                        tr.classList.add('clickable-row');
                         tr.innerHTML = `
                             <td>${app.doctorName}</td>
                             <td>${formatDate(app.date)}</td>
@@ -1036,6 +1042,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${app.purpose}</td>
                             <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                         `;
+                        // Make row clickable to show appointment details
+                        tr.addEventListener('click', () => {
+                            showAppointmentDetails(app);
+                        });
                         patientAppsTable.appendChild(tr);
                     });
                 } else {
@@ -1045,13 +1055,217 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load patient reports from API
                 await loadReports('patientReportsGrid');
                 
+                // Update the patient reports dashboard section
+                const dashboardReportsList = document.getElementById('patientRecentReportsList');
+                dashboardReportsList.innerHTML = '';
+                
+                if (reports && reports.length > 0) {
+                    // Show most recent reports for dashboard
+                    const recentReports = [...reports]
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .slice(0, 3);
+                    
+                    recentReports.forEach(report => {
+                        const tr = document.createElement('tr');
+                        tr.classList.add('clickable-row');
+                        tr.innerHTML = `
+                            <td>${report.category}</td>
+                            <td>${report.title}</td>
+                            <td>${formatDate(report.date)}</td>
+                        `;
+                        // Make row clickable to show report details
+                        tr.addEventListener('click', () => {
+                            showReportDetails(report);
+                        });
+                        dashboardReportsList.appendChild(tr);
+                    });
+                } else {
+                    dashboardReportsList.innerHTML = '<tr><td colspan="3" class="text-center">No recent reports</td></tr>';
+                }
+                
                 // Get prescriptions
                 await loadPrescriptions();
+                
+                // Update the active prescriptions dashboard section
+                const dashboardPrescriptionsList = document.getElementById('patientActivePrescriptionsList');
+                dashboardPrescriptionsList.innerHTML = '';
+                
+                if (prescriptions && prescriptions.length > 0) {
+                    // Show active prescriptions for dashboard
+                    const activePrescriptions = prescriptions.slice(0, 3);
+                    
+                    activePrescriptions.forEach(prescription => {
+                        const medicationNames = prescription.medications 
+                            ? prescription.medications.map(med => med.name).join(', ')
+                            : 'No medications listed';
+                            
+                        const tr = document.createElement('tr');
+                        tr.classList.add('clickable-row');
+                        tr.innerHTML = `
+                            <td>${prescription.doctorName}</td>
+                            <td>${truncateText(medicationNames, 30)}</td>
+                            <td>${formatDate(prescription.date)}</td>
+                        `;
+                        // Make row clickable to show prescription details
+                        tr.addEventListener('click', () => {
+                            showPrescriptionDetails(prescription);
+                        });
+                        dashboardPrescriptionsList.appendChild(tr);
+                    });
+                } else {
+                    dashboardPrescriptionsList.innerHTML = '<tr><td colspan="3" class="text-center">No active prescriptions</td></tr>';
+                }
             }
         } catch (error) {
             console.error('Error loading patient data:', error);
             showToast('Error loading patient data. Please try again.', 'error');
         }
+    }
+    
+    // Show appointment details in a modal
+    function showAppointmentDetails(appointment) {
+        const modal = document.getElementById('appointmentDetailsModal') || createAppointmentDetailsModal();
+        
+        // Update modal content
+        modal.querySelector('.modal-title').textContent = 'Appointment Details';
+        
+        const modalBody = modal.querySelector('.modal-body');
+        modalBody.innerHTML = `
+            <div class="appointment-details">
+                <p><strong>Doctor:</strong> ${appointment.doctorName}</p>
+                <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
+                <p><strong>Time:</strong> ${appointment.time}</p>
+                <p><strong>Purpose:</strong> ${appointment.purpose}</p>
+                <p><strong>Status:</strong> <span class="status-badge status-${appointment.status.toLowerCase().replace(' ', '-')}">${appointment.status}</span></p>
+                ${appointment.notes ? `<p><strong>Notes:</strong> ${appointment.notes}</p>` : ''}
+            </div>
+        `;
+        
+        // Display modal
+        modal.style.display = 'block';
+    }
+    
+    // Show prescription details in a modal
+    function showPrescriptionDetails(prescription) {
+        const modal = document.getElementById('prescriptionDetailsModal') || createPrescriptionDetailsModal();
+        
+        // Update modal content
+        modal.querySelector('.modal-title').textContent = 'Prescription Details';
+        
+        const modalBody = modal.querySelector('.modal-body');
+        
+        // Format medications list
+        let medicationsHtml = '<ul class="medications-list">';
+        if (prescription.medications && prescription.medications.length > 0) {
+            prescription.medications.forEach(med => {
+                medicationsHtml += `<li><strong>${med.name}</strong> - ${med.dosage}</li>`;
+            });
+        } else {
+            medicationsHtml += '<li>No medications listed</li>';
+        }
+        medicationsHtml += '</ul>';
+        
+        modalBody.innerHTML = `
+            <div class="prescription-details">
+                <p><strong>Doctor:</strong> ${prescription.doctorName}</p>
+                <p><strong>Date:</strong> ${formatDate(prescription.date)}</p>
+                <p><strong>Diagnosis:</strong> ${prescription.diagnosis}</p>
+                <p><strong>Medications:</strong></p>
+                ${medicationsHtml}
+                ${prescription.instructions ? `<p><strong>Instructions:</strong> ${prescription.instructions}</p>` : ''}
+            </div>
+        `;
+        
+        // Display modal
+        modal.style.display = 'block';
+    }
+    
+    // Create modal for appointment details if it doesn't exist
+    function createAppointmentDetailsModal() {
+        const modal = document.createElement('div');
+        modal.id = 'appointmentDetailsModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Appointment Details</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <!-- Content will be filled dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-btn">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners to close modal
+        const closeBtn = modal.querySelector('.close');
+        const closeBtnFooter = modal.querySelector('.close-btn');
+        
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        closeBtnFooter.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Close when clicking outside the modal
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        return modal;
+    }
+    
+    // Create modal for prescription details if it doesn't exist
+    function createPrescriptionDetailsModal() {
+        const modal = document.createElement('div');
+        modal.id = 'prescriptionDetailsModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Prescription Details</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <!-- Content will be filled dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-btn">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners to close modal
+        const closeBtn = modal.querySelector('.close');
+        const closeBtnFooter = modal.querySelector('.close-btn');
+        
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        closeBtnFooter.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Close when clicking outside the modal
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        return modal;
     }
     
     // Load doctor appointments
@@ -1063,14 +1277,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         const todaysAppointments = appointments.filter(app => app.date === today);
         
+        // Sort today's appointments by status priority: In Progress, Scheduled, Completed
+        const statusOrder = { 'In Progress': 0, 'Scheduled': 1, 'Completed': 2, 'Cancelled': 3 };
+        todaysAppointments.sort((a, b) => {
+            // Sort by status priority
+            const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+            if (statusDiff !== 0) return statusDiff;
+            
+            // Then by time
+            return a.time.localeCompare(b.time);
+        });
+        
         if (todaysAppointments.length > 0) {
             todaysAppointments.forEach(app => {
                 const tr = document.createElement('tr');
+                tr.classList.add('clickable-row');
                 tr.innerHTML = `
                     <td>${app.patientName}</td>
                     <td>${app.time}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                 `;
+                tr.addEventListener('click', () => {
+                    showAppointmentDetails(app);
+                });
                 dashboardAppsList.appendChild(tr);
             });
         } else {
@@ -1082,11 +1311,20 @@ document.addEventListener('DOMContentLoaded', function() {
         appsTable.innerHTML = '';
         
         if (appointments.length > 0) {
-            // Sort by date, most recent first
-            const sortedAppointments = [...appointments].sort((a, b) => new Date(b.date) - new Date(a.date));
+            // Sort by status first: In Progress, Scheduled, Completed
+            // Then by date, newest first
+            const sortedAppointments = [...appointments].sort((a, b) => {
+                // First sort by status
+                const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                if (statusDiff !== 0) return statusDiff;
+                
+                // Then by date (newest first)
+                return new Date(a.date) - new Date(b.date);
+            });
             
             sortedAppointments.forEach(app => {
                 const tr = document.createElement('tr');
+                tr.classList.add('clickable-row');
                 tr.innerHTML = `
                     <td>${app.patientName}</td>
                     <td>${formatDate(app.date)}</td>
@@ -1095,16 +1333,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>
                         <div class="table-actions">
-                            <button class="btn-link" title="Edit">
+                            <button class="btn-link edit-appointment" data-id="${app.id}" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-link" title="Cancel">
+                            <button class="btn-link cancel-appointment" data-id="${app.id}" title="Cancel">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </td>
                 `;
+                // Make row clickable
+                tr.addEventListener('click', (e) => {
+                    // Don't trigger if clicking on buttons
+                    if (!e.target.closest('.table-actions')) {
+                        showAppointmentDetails(app);
+                    }
+                });
+                
+                // Add event listeners for buttons
                 appsTable.appendChild(tr);
+                
+                // Add button event listeners after appending to avoid propagation issues
+                const editBtn = tr.querySelector('.edit-appointment');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent row click
+                    showToast(`Editing appointment for ${app.patientName}`);
+                    // Update appointment status code would go here
+                });
+                
+                const cancelBtn = tr.querySelector('.cancel-appointment');
+                cancelBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent row click
+                    showToast(`Cancelled appointment for ${app.patientName}`);
+                    // Cancellation code would go here
+                });
             });
         } else {
             appsTable.innerHTML = '<tr><td colspan="6" class="text-center">No appointments found</td></tr>';
@@ -1132,50 +1394,29 @@ document.addEventListener('DOMContentLoaded', function() {
         recentTestsTable.innerHTML = '';
         
         try {
-            // Temporarily populate with mock data for demonstration
-            // In a real app, this would be fetched from the server
-            tests = [
-                {
-                    id: 'RT001',
-                    patientId: 'P001',
-                    patientName: 'John Smith',
-                    testType: 'Complete Blood Count',
-                    date: 'May 1, 2025',
-                    status: 'Completed'
-                },
-                {
-                    id: 'RT002',
-                    patientId: 'P002',
-                    patientName: 'Maria Garcia',
-                    testType: 'Lipid Panel',
-                    date: 'May 2, 2025',
-                    status: 'Pending'
-                },
-                {
-                    id: 'RT003',
-                    patientId: 'P005',
-                    patientName: 'Michael Brown',
-                    testType: 'MRI - Knee',
-                    date: 'Apr 20, 2025',
-                    status: 'Completed'
-                },
-                {
-                    id: 'RT004',
-                    patientId: 'P003',
-                    patientName: 'David Johnson',
-                    testType: 'Urinalysis',
-                    date: 'May 3, 2025',
-                    status: 'In Progress'
-                }
-            ];
+            // Fetch tests from API
+            const response = await fetch('/api/tests');
+            if (!response.ok) {
+                throw new Error('Failed to fetch tests');
+            }
+            tests = await response.json();
             
             // Also populate the test type dropdown
             const testTypeSelect = document.getElementById('testType');
             if (testTypeSelect) {
                 testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
                 
-                // Fetch test types from API
-                const testTypes = await fetchTestTypes();
+                // Add common test types
+                const testTypes = [
+                    { id: 'CBC', name: 'Complete Blood Count' },
+                    { id: 'LP', name: 'Lipid Panel' },
+                    { id: 'UA', name: 'Urinalysis' },
+                    { id: 'MRI', name: 'MRI Scan' },
+                    { id: 'XRAY', name: 'X-Ray' },
+                    { id: 'ECG', name: 'Electrocardiogram' },
+                    { id: 'CT', name: 'CT Scan' },
+                    { id: 'TFT', name: 'Thyroid Function Test' }
+                ];
                 
                 testTypes.forEach(type => {
                     const option = document.createElement('option');
@@ -1185,18 +1426,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // Populate dashboard pending tests section
+            const dashboardTestsList = document.getElementById('pendingTestsList');
+            if (dashboardTestsList) {
+                dashboardTestsList.innerHTML = '';
+                
+                // Get pending and in-progress tests for dashboard
+                const pendingTests = tests
+                    .filter(test => test.status === 'Pending' || test.status === 'In Progress')
+                    .slice(0, 3);
+                
+                if (pendingTests.length > 0) {
+                    pendingTests.forEach(test => {
+                        const tr = document.createElement('tr');
+                        tr.classList.add('clickable-row');
+                        tr.innerHTML = `
+                            <td>${test.patientName}</td>
+                            <td>${test.testType}</td>
+                            <td><span class="status-badge status-${test.status.toLowerCase().replace(' ', '-')}">${test.status}</span></td>
+                        `;
+                        // Make row clickable
+                        tr.addEventListener('click', () => {
+                            // Show test details in a modal
+                            showToast(`Viewing test: ${test.testType} for ${test.patientName}`);
+                        });
+                        dashboardTestsList.appendChild(tr);
+                    });
+                } else {
+                    dashboardTestsList.innerHTML = '<tr><td colspan="3" class="text-center">No pending tests</td></tr>';
+                }
+            }
+            
             if (tests.length > 0) {
-                // Sort by date, most recent first
-                const sortedTests = [...tests].sort((a, b) => new Date(b.date) - new Date(a.date));
+                // Sort by status first (Pending, In Progress, then Completed)
+                // Then by date, most recent first
+                const statusOrder = { 'In Progress': 0, 'Pending': 1, 'Completed': 2 };
+                const sortedTests = [...tests].sort((a, b) => {
+                    // First sort by status
+                    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                    if (statusDiff !== 0) return statusDiff;
+                    
+                    // Then sort by date (newest first)
+                    return new Date(b.date) - new Date(a.date);
+                });
                 
                 sortedTests.forEach(test => {
                     const tr = document.createElement('tr');
+                    tr.classList.add('clickable-row');
                     tr.innerHTML = `
                         <td>${test.patientName}</td>
                         <td>${test.testType}</td>
                         <td>${formatDate(test.date)}</td>
                         <td><span class="status-badge status-${test.status.toLowerCase().replace(' ', '-')}">${test.status}</span></td>
                     `;
+                    // Make row clickable
+                    tr.addEventListener('click', () => {
+                        // Show test details in a modal
+                        showToast(`Viewing test: ${test.testType} for ${test.patientName}`);
+                    });
                     recentTestsTable.appendChild(tr);
                 });
             } else {
