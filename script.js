@@ -1079,6 +1079,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load doctor-specific data
     async function loadDoctorData() {
         try {
+            // Setup doctor appointment creation functionality
+            setupDoctorAppointmentForm();
+            
             // Fetch patients from API
             const allPatients = await fetchPatients();
             
@@ -2199,6 +2202,137 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show the modal
         modal.style.display = 'block';
+    }
+    
+    // Setup doctor appointment form functionality
+    function setupDoctorAppointmentForm() {
+        const newDoctorAppointmentBtn = document.getElementById('newDoctorAppointmentBtn');
+        const doctorAppointmentModal = document.getElementById('doctorAppointmentModal');
+        
+        if (newDoctorAppointmentBtn && doctorAppointmentModal) {
+            // Open modal when button is clicked
+            newDoctorAppointmentBtn.addEventListener('click', function() {
+                doctorAppointmentModal.style.display = 'block';
+                
+                // Load patients for the select dropdown
+                loadPatientsForAppointment();
+                
+                // Set default date to today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('doctorAppointmentDate').value = today;
+            });
+            
+            // Close modal when X is clicked
+            const closeBtn = doctorAppointmentModal.querySelector('.close');
+            closeBtn.addEventListener('click', function() {
+                doctorAppointmentModal.style.display = 'none';
+            });
+            
+            // Close modal when Cancel button is clicked
+            const cancelBtn = doctorAppointmentModal.querySelector('.modal-close');
+            cancelBtn.addEventListener('click', function() {
+                doctorAppointmentModal.style.display = 'none';
+            });
+            
+            // Close when clicking outside the modal
+            window.addEventListener('click', function(event) {
+                if (event.target === doctorAppointmentModal) {
+                    doctorAppointmentModal.style.display = 'none';
+                }
+            });
+            
+            // Handle form submission
+            const doctorAppointmentForm = document.getElementById('doctorAppointmentForm');
+            doctorAppointmentForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                console.log('Doctor appointment form submitted');
+                
+                // Get form data
+                const patientId = document.getElementById('doctorAppointmentPatient').value;
+                const date = document.getElementById('doctorAppointmentDate').value;
+                const time = document.getElementById('doctorAppointmentTime').value;
+                const purpose = document.getElementById('doctorAppointmentPurpose').value;
+                const notes = document.getElementById('doctorAppointmentNotes').value;
+                const status = document.getElementById('doctorAppointmentStatus').value;
+                
+                console.log('Form data:', { patientId, date, time, purpose, notes, status });
+                
+                // Validate required fields
+                if (!patientId || !date || !time) {
+                    showToast('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Show loading indicator
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+                submitBtn.disabled = true;
+                
+                try {
+                    // Create appointment data
+                    const appointmentData = {
+                        patientId: patientId,
+                        doctorId: currentUser.id,
+                        date: date,
+                        time: time,
+                        purpose: purpose || 'General Appointment',
+                        notes: notes || '',
+                        status: status || 'Scheduled'
+                    };
+                    
+                    console.log('Submitting appointment data:', appointmentData);
+                    
+                    // Submit appointment
+                    const result = await createAppointment(appointmentData);
+                    
+                    // Close modal and show success message
+                    doctorAppointmentModal.style.display = 'none';
+                    showToast('Appointment scheduled successfully!', 'success');
+                    
+                    // Reset form
+                    this.reset();
+                    
+                    // Reset button
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    
+                    // Reload appointments
+                    appointments = await fetchAppointments(currentUser.id, null);
+                    loadDoctorAppointments();
+                } catch (error) {
+                    console.error('Error scheduling appointment:', error);
+                    showToast('Error scheduling appointment. Please try again.', 'error');
+                    
+                    // Reset button
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    }
+    
+    // Load patients for doctor appointment form
+    async function loadPatientsForAppointment() {
+        try {
+            const patients = await fetchPatients();
+            
+            const patientSelect = document.getElementById('doctorAppointmentPatient');
+            if (patientSelect) {
+                patientSelect.innerHTML = '<option value="">Select a patient</option>';
+                
+                patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = patient.name;
+                    patientSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading patients for appointment:', error);
+            showToast('Failed to load patients. Please try again.', 'error');
+        }
     }
     
     // ===============================================================

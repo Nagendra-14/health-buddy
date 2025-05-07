@@ -678,26 +678,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For debugging
       console.log('Reports API query params:', { doctorId, patientId, category });
       
-      // Execute query with filters
-      const reportsData = await db.query.reports.findMany({ 
-        where: (reports, { eq, and }) => {
-          const conditions = [];
-          
-          if (doctorId) {
-            conditions.push(eq(reports.doctorId, parseInt(doctorId)));
-          }
-          
-          if (patientId) {
-            conditions.push(eq(reports.patientId, parseInt(patientId)));
-          }
-          
-          if (category && category !== 'all') {
-            conditions.push(eq(reports.category, category));
-          }
-          
-          return conditions.length > 0 ? and(...conditions) : undefined;
+      // Build query differently based on filters
+      let reportsData;
+      
+      if (!doctorId && !patientId && (!category || category === 'all')) {
+        // No filters, get all reports
+        reportsData = await db.query.reports.findMany();
+      } else {
+        // Apply filters
+        let query = db.select().from(reports);
+        
+        if (doctorId) {
+          query = query.where(eq(reports.doctorId, doctorId));
         }
-      });
+        
+        if (patientId) {
+          query = query.where(eq(reports.patientId, patientId));
+        }
+        
+        if (category && category !== 'all') {
+          query = query.where(eq(reports.category, category));
+        }
+        
+        reportsData = await query;
+      }
+      
       res.json(reportsData);
     } catch (error) {
       console.error('Error getting reports:', error);
