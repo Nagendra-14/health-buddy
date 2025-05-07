@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function to filter time slots based on existing appointments
-    async function getAvailableTimeSlots(doctorId, appointmentDate) {
+    async function getAvailableTimeSlots(doctorId, appointmentDate, patientId = null) {
         if (!doctorId || !appointmentDate) {
             return generateTimeSlots(); // Return all slots if no doctor or date selected
         }
@@ -712,24 +712,40 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Get all slots
             const allSlots = generateTimeSlots();
+            const bookedSlots = new Set();
             
             // Get doctor's appointments for that date
-            const response = await fetch(`/api/appointments?doctorId=${doctorId}&date=${appointmentDate}`);
+            const doctorResponse = await fetch(`/api/appointments?doctorId=${doctorId}&date=${appointmentDate}`);
             
-            if (!response.ok) {
+            if (doctorResponse.ok) {
+                const doctorAppointments = await doctorResponse.json();
+                
+                // Add doctor's booked slots
+                doctorAppointments
+                    .filter(app => app.status !== 'Cancelled')
+                    .forEach(app => bookedSlots.add(app.time));
+            } else {
                 console.error('Failed to fetch doctor appointments');
-                return allSlots; // Return all slots if fetch fails
             }
             
-            const appointments = await response.json();
+            // If patientId is provided, also check patient's appointments for that date
+            if (patientId) {
+                const patientResponse = await fetch(`/api/appointments?patientId=${patientId}&date=${appointmentDate}`);
+                
+                if (patientResponse.ok) {
+                    const patientAppointments = await patientResponse.json();
+                    
+                    // Add patient's booked slots
+                    patientAppointments
+                        .filter(app => app.status !== 'Cancelled')
+                        .forEach(app => bookedSlots.add(app.time));
+                } else {
+                    console.error('Failed to fetch patient appointments');
+                }
+            }
             
-            // Filter out booked slots (excluding cancelled appointments)
-            const bookedSlots = appointments
-                .filter(app => app.status !== 'Cancelled')
-                .map(app => app.time);
-            
-            // Return available slots
-            return allSlots.filter(slot => !bookedSlots.includes(slot));
+            // Return available slots (those not in the bookedSlots set)
+            return allSlots.filter(slot => !bookedSlots.has(slot));
         } catch (error) {
             console.error('Error getting available time slots:', error);
             return generateTimeSlots(); // Return all slots on error
@@ -744,8 +760,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loading indicator
             selectElement.innerHTML = '<option value="">Loading time slots...</option>';
             
+            // Get available slots - include current user ID if available (for patient conflict checking)
+            let patientId = null;
+            if (currentUser && currentUser.type === 'patient') {
+                patientId = currentUser.id;
+            }
+            
             // Get available slots
-            const availableSlots = await getAvailableTimeSlots(doctorId, appointmentDate);
+            const availableSlots = await getAvailableTimeSlots(doctorId, appointmentDate, patientId);
             
             // Clear and populate select element
             selectElement.innerHTML = '<option value="">Select a time</option>';
@@ -3307,12 +3329,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.status === 409) {
                 console.error('Time slot conflict:', result);
                 
-                // Show a more detailed error message with the conflicting appointment details
-                if (result.conflictingAppointment) {
-                    const conflict = result.conflictingAppointment;
-                    showToast(`The doctor already has an appointment at ${conflict.time} with ${conflict.patientName}. Please select a different time.`, 'error');
+                // Show the detailed error message from the server
+                // This message will specify whether it's a doctor's conflict or patient's conflict
+                if (result.message) {
+                    showToast(result.message, 'error');
                 } else {
-                    showToast(result.message || 'This time slot is already booked. Please select a different time.', 'error');
+                    showToast('This time slot is already booked. Please select a different time.', 'error');
+                }
+                
+                // Update available time slots in the UI if possible
+                if (appointmentData.doctorId) {
+                    const timeSelect = document.getElementById('appointmentTime') || document.getElementById('doctorAppointmentTime');
+                    const dateInput = document.getElementById('appointmentDate') || document.getElementById('doctorAppointmentDate');
+                    
+                    if (timeSelect && dateInput && dateInput.value) {
+                        updateTimeSlotOptions(timeSelect, appointmentData.doctorId, dateInput.value);
+                    }
                 }
                 
                 // Return a specific result so the UI can handle the conflict
