@@ -114,16 +114,57 @@ document.addEventListener('DOMContentLoaded', function() {
     // API function to save a prescription
     async function savePrescription(prescriptionData) {
         try {
+            // Convert medications array to JSON string if it's an array
+            let processedData = { ...prescriptionData };
+            
+            // Make sure diagnoses is included
+            if (!processedData.diagnosis && processedData.details) {
+                processedData.diagnosis = processedData.details;
+            }
+            
+            // Ensure medications are properly formatted as a JSON string
+            if (Array.isArray(processedData.medications)) {
+                processedData.medications = JSON.stringify(processedData.medications);
+            } else if (typeof processedData.medications === 'string') {
+                // If it's already a string, check if it's valid JSON
+                try {
+                    // Test if it's parseable
+                    JSON.parse(processedData.medications);
+                    // If it parses, it's already valid JSON - keep as is
+                } catch (e) {
+                    // If not valid JSON, wrap it in an array and stringify
+                    processedData.medications = JSON.stringify([{
+                        name: processedData.medications,
+                        dosage: '',
+                        frequency: '',
+                        instructions: ''
+                    }]);
+                }
+            } else if (!processedData.medications) {
+                // If medications is null or undefined, set as empty array
+                processedData.medications = JSON.stringify([]);
+            }
+            
+            // Set the date if not provided
+            if (!processedData.date) {
+                processedData.date = new Date().toLocaleDateString('en-US', { 
+                    month: 'long', day: 'numeric', year: 'numeric' 
+                });
+            }
+            
+            console.log('Sending prescription data:', processedData);
+            
             const response = await fetch('/api/prescriptions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(prescriptionData)
+                body: JSON.stringify(processedData)
             });
             
             if (!response.ok) {
-                throw new Error('Failed to save prescription');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save prescription');
             }
             
             const savedPrescription = await response.json();
@@ -206,21 +247,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // API function to authenticate a user
     async function authenticateUser(username, password, userType) {
         try {
-            const endpoint = userType === 'doctor' ? '/api/doctors' : '/api/patients';
-            const response = await fetch(endpoint);
+            // Use the login API endpoint
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password, userType })
+            });
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch ${userType}s data`);
+                // Handle auth errors
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Authentication failed');
             }
             
-            const users = await response.json();
-            
-            // Find user with matching username and password
-            const authenticatedUser = users.find(
-                user => user.username === username && user.password === password
-            );
-            
-            return authenticatedUser;
+            // Return the authenticated user data
+            return await response.json();
         } catch (error) {
             console.error('Authentication error:', error);
             return null;
@@ -1993,26 +2036,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         const patientId = this.value;
                         const category = categoryFilter.value;
                         
-                        // Get filtered reports
-                        let filteredData;
-                        if (patientId) {
-                            // Filter by patient
-                            filteredData = await fetchReportsData(null, patientId);
-                        } else {
-                            // Get all reports for doctor
-                            filteredData = await fetchReportsData(currentUser.id, null);
-                        }
+                        // Use both doctor ID and filters
+                        const doctorIdToUse = patientId ? null : currentUser.id;
                         
-                        // Apply category filter if selected
-                        if (category) {
-                            filteredData = filteredData.filter(report => {
-                                if (category === 'blood' && report.category.toLowerCase().includes('blood')) return true;
-                                if (category === 'urine' && report.category.toLowerCase().includes('urine')) return true;
-                                if (category === 'imaging' && (report.category.toLowerCase().includes('imaging') || report.category.toLowerCase().includes('scan') || report.category.toLowerCase().includes('ray'))) return true;
-                                if (category === 'other' && !report.category.toLowerCase().includes('blood') && !report.category.toLowerCase().includes('urine') && !report.category.toLowerCase().includes('imaging') && !report.category.toLowerCase().includes('scan') && !report.category.toLowerCase().includes('ray')) return true;
-                                return false;
-                            });
-                        }
+                        // Fetch filtered data from the server
+                        const filteredData = await fetchReportsData(doctorIdToUse, patientId, category);
                         
                         // Reload the reports container with filtered data
                         loadReports(containerId, filteredData);
