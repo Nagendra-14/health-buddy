@@ -889,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doctorTimeSlots = new Map();
       
       // Function to get 30-minute time slot from appointment time
-      const getTimeSlot = (appointmentTime) => {
+      const getTimeSlot = (appointmentTime: string): string => {
         const [hours, minutes] = appointmentTime.split(':').map(Number);
         // Return the slot start time (each slot is 30 minutes)
         const slotMinute = minutes < 30 ? 0 : 30;
@@ -941,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create new appointment - standardize time to MM:30 or MM:00 format
-      const standardizedTime = time.replace(timeRegex, (match, hour, minute) => {
+      const standardizedTime = time.replace(timeRegex, (match: string, hour: string, minute: string) => {
         const mins = parseInt(minute) < 30 ? '00' : '30';
         return `${hour.padStart(2, '0')}:${mins}`;
       });

@@ -2900,6 +2900,42 @@ document.addEventListener('DOMContentLoaded', function() {
         const doctorAppointmentModal = document.getElementById('doctorAppointmentModal');
         
         if (newDoctorAppointmentBtn && doctorAppointmentModal) {
+            // Configure time input for 30-minute slots
+            const timeInput = document.getElementById('doctorAppointmentTime');
+            if (timeInput) {
+                // Set 30-minute step for time input
+                timeInput.step = 1800; // 30 minutes in seconds
+                
+                // Add an event listener to enforce 30-minute slots
+                timeInput.addEventListener('change', function() {
+                    if (this.value) {
+                        // Extract hours and minutes
+                        const [hours, minutes] = this.value.split(':').map(Number);
+                        
+                        // Round to nearest 30-minute slot
+                        const roundedMinutes = minutes < 30 ? '00' : '30';
+                        const formattedHours = hours.toString().padStart(2, '0');
+                        
+                        // Set the standardized time
+                        this.value = `${formattedHours}:${roundedMinutes}`;
+                    }
+                });
+                
+                // Set default time to current hour, rounded to next 30-minute slot
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                let defaultHour = currentHour;
+                let defaultMinute = currentMinute < 30 ? '30' : '00';
+                
+                // If minutes > 30, increment to next hour
+                if (currentMinute >= 30) {
+                    defaultHour = (currentHour + 1) % 24;
+                }
+                
+                timeInput.value = `${defaultHour.toString().padStart(2, '0')}:${defaultMinute}`;
+            }
+            
             // Open modal when button is clicked
             newDoctorAppointmentBtn.addEventListener('click', function() {
                 doctorAppointmentModal.style.display = 'block';
@@ -2910,6 +2946,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Set default date to today
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('doctorAppointmentDate').value = today;
+                
+                // Show a note about 30-minute slots
+                showToast('Appointments are scheduled in 30-minute slots (00 or 30 minutes)', 'info');
             });
             
             // Close modal when X is clicked
