@@ -2037,6 +2037,97 @@ document.addEventListener('DOMContentLoaded', function() {
         return text.substr(0, maxLength) + '...';
     }
     
+    // Function to create a new appointment
+    async function createAppointment(appointmentData) {
+        try {
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(appointmentData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create appointment');
+            }
+            
+            const result = await response.json();
+            
+            // Reload appointments after creating a new one
+            if (currentUser.type === 'doctor') {
+                appointments = await fetchAppointments(currentUser.id, null);
+                loadDoctorAppointments();
+            } else {
+                appointments = await fetchAppointments(null, currentUser.id);
+                
+                // Reload the patient dashboard and appointments
+                const dashboardAppsList = document.getElementById('patientAppointmentsList');
+                if (dashboardAppsList) {
+                    const upcomingAppointments = appointments
+                        .filter(app => new Date(app.date) >= new Date())
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .slice(0, 3);
+                    
+                    dashboardAppsList.innerHTML = '';
+                    
+                    if (upcomingAppointments.length > 0) {
+                        upcomingAppointments.forEach(app => {
+                            const tr = document.createElement('tr');
+                            tr.classList.add('clickable-row');
+                            tr.innerHTML = `
+                                <td>${app.doctorName}</td>
+                                <td>${formatDate(app.date)}</td>
+                                <td>${app.time}</td>
+                                <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
+                            `;
+                            tr.addEventListener('click', () => {
+                                showAppointmentDetails(app);
+                            });
+                            dashboardAppsList.appendChild(tr);
+                        });
+                    } else {
+                        dashboardAppsList.innerHTML = '<tr><td colspan="4" class="text-center">No upcoming appointments</td></tr>';
+                    }
+                }
+                
+                // Reload the appointments page
+                const patientAppsTable = document.getElementById('patientAppointmentsTable');
+                if (patientAppsTable) {
+                    patientAppsTable.innerHTML = '';
+                    
+                    if (appointments.length > 0) {
+                        appointments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        
+                        appointments.forEach(app => {
+                            const tr = document.createElement('tr');
+                            tr.classList.add('clickable-row');
+                            tr.innerHTML = `
+                                <td>${app.doctorName}</td>
+                                <td>${formatDate(app.date)}</td>
+                                <td>${app.time}</td>
+                                <td>${app.purpose}</td>
+                                <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
+                            `;
+                            tr.addEventListener('click', () => {
+                                showAppointmentDetails(app);
+                            });
+                            patientAppsTable.appendChild(tr);
+                        });
+                    } else {
+                        patientAppsTable.innerHTML = '<tr><td colspan="5" class="text-center">No appointments found</td></tr>';
+                    }
+                }
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Error creating appointment:', error);
+            showToast('Error scheduling appointment. Please try again.', 'error');
+            throw error;
+        }
+    }
+    
     // ===============================================================
     // INITIALIZE APPLICATION
     // ===============================================================
