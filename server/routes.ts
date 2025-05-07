@@ -671,43 +671,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medical reports
   app.get('/api/reports', async (req, res) => {
     try {
-      const doctorId = req.query.doctorId as string;
-      const patientId = req.query.patientId as string;
-      const category = req.query.category as string;
+      const doctorId = req.query.doctorId as string | undefined;
+      const patientId = req.query.patientId as string | undefined;
+      const category = req.query.category as string | undefined;
       
-      let whereConditions = {};
-      
-      // Apply filters if provided
-      if (doctorId) {
-        whereConditions = { ...whereConditions, doctorId };
-      }
-      
-      if (patientId) {
-        whereConditions = { ...whereConditions, patientId };
-      }
-      
-      if (category && category !== 'all') {
-        whereConditions = { ...whereConditions, category };
-      }
+      // For debugging
+      console.log('Reports API query params:', { doctorId, patientId, category });
       
       // Execute query with filters
-      const reportsData = Object.keys(whereConditions).length > 0
-        ? await db.query.reports.findMany({ 
-            where: (reports, { eq, and }) => {
-              const conditions = [];
-              if (whereConditions.doctorId) {
-                conditions.push(eq(reports.doctorId, whereConditions.doctorId));
-              }
-              if (whereConditions.patientId) {
-                conditions.push(eq(reports.patientId, whereConditions.patientId));
-              }
-              if (whereConditions.category) {
-                conditions.push(eq(reports.category, whereConditions.category));
-              }
-              return and(...conditions);
-            }
-          })
-        : await db.query.reports.findMany();
+      const reportsData = await db.query.reports.findMany({ 
+        where: (reports, { eq, and }) => {
+          const conditions = [];
+          
+          if (doctorId) {
+            conditions.push(eq(reports.doctorId, parseInt(doctorId)));
+          }
+          
+          if (patientId) {
+            conditions.push(eq(reports.patientId, parseInt(patientId)));
+          }
+          
+          if (category && category !== 'all') {
+            conditions.push(eq(reports.category, category));
+          }
+          
+          return conditions.length > 0 ? and(...conditions) : undefined;
+        }
+      });
       res.json(reportsData);
     } catch (error) {
       console.error('Error getting reports:', error);

@@ -1729,20 +1729,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fetch reports data
-    async function fetchReportsData(doctorId = null, patientId = null) {
+    async function fetchReportsData(doctorId = null, patientId = null, category = null) {
         try {
             let url = '/api/reports';
+            const params = new URLSearchParams();
+            
             if (doctorId) {
-                url += `?doctorId=${doctorId}`;
-            } else if (patientId) {
-                url += `?patientId=${patientId}`;
+                params.append('doctorId', doctorId);
             }
+            
+            if (patientId) {
+                params.append('patientId', patientId);
+            }
+            
+            if (category && category !== 'all') {
+                params.append('category', category);
+            }
+            
+            const paramString = params.toString();
+            if (paramString) {
+                url += `?${paramString}`;
+            }
+            
+            console.log('Fetching reports from URL:', url);
             
             const response = await fetch(url);
             if (!response.ok) {
+                const text = await response.text();
+                console.error('Error response:', text);
                 throw new Error('Failed to fetch reports');
             }
-            return await response.json();
+            
+            const data = await response.json();
+            console.log('Fetched reports:', data);
+            return data;
         } catch (error) {
             console.error('Error fetching reports:', error);
             showToast('Error loading reports. Please try again.', 'error');
@@ -1958,16 +1978,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Filter reports by category
-    function filterReports(containerId, category) {
-        const reportCards = document.querySelectorAll(`#${containerId} .report-card`);
+    async function filterReports(containerId, category) {
+        console.log(`Filtering reports in ${containerId} by category: ${category}`);
         
-        reportCards.forEach(card => {
-            if (category === 'all' || card.dataset.category === category) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
+        try {
+            // Get current user and determine doctorId/patientId based on user type
+            let doctorId = null;
+            let patientId = null;
+            
+            if (currentUser) {
+                if (currentUser.type === 'doctor') {
+                    doctorId = currentUser.id;
+                } else if (currentUser.type === 'patient') {
+                    patientId = currentUser.id;
+                }
             }
-        });
+            
+            // Fetch reports with category filter
+            const filteredReports = await fetchReportsData(doctorId, patientId, category);
+            
+            // Reload the reports container with filtered data
+            await loadReports(containerId, filteredReports);
+            
+            console.log(`Reports filtered, found ${filteredReports.length} reports`);
+        } catch (error) {
+            console.error('Error filtering reports:', error);
+            showToast('Error filtering reports. Please try again.', 'error');
+        }
     }
     
     // Edit prescription
@@ -2185,6 +2222,14 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Creating appointment with data:', appointmentData);
             
+            // Make sure required fields are present
+            if (!appointmentData.patientId || !appointmentData.doctorId || !appointmentData.date || !appointmentData.time) {
+                const error = new Error('Missing required appointment fields');
+                console.error(error);
+                showToast('Please fill in all required appointment fields', 'error');
+                throw error;
+            }
+            
             const response = await fetch('/api/appointments', {
                 method: 'POST',
                 headers: {
@@ -2199,12 +2244,14 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 result = JSON.parse(responseText);
             } catch (e) {
-                console.error('Error parsing response:', responseText);
-                throw new Error('Invalid response from server');
+                console.error('Failed to parse response:', responseText);
+                showToast('Server returned an invalid response', 'error');
+                throw new Error('Invalid server response');
             }
             
             if (!response.ok) {
                 console.error('Server returned error:', result);
+                showToast(result.message || 'Failed to create appointment', 'error');
                 throw new Error(result.message || 'Failed to create appointment');
             }
             
