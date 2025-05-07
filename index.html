@@ -10,6 +10,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <script>
+        // Debug script to help diagnose sidebar issues
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded. Adding sidebar debug');
+            
+            // Add listener to check sidebar visibility every second
+            setInterval(function() {
+                const sidebar = document.getElementById('sidebar');
+                const navLinks = document.getElementById('navLinks');
+                if (sidebar) {
+                    console.log('Sidebar element:', 
+                        'display:', getComputedStyle(sidebar).display,
+                        'visibility:', getComputedStyle(sidebar).visibility,
+                        'transform:', getComputedStyle(sidebar).transform
+                    );
+                    
+                    if (navLinks) {
+                        console.log('NavLinks children:', navLinks.children.length);
+                    } else {
+                        console.log('NavLinks element not found');
+                    }
+                } else {
+                    console.log('Sidebar element not found');
+                }
+            }, 2000);
+        });
+    </script>
+    
     <!-- Login Page -->
     <div id="loginPage" class="page active">
         <div class="login-container">
@@ -708,5 +736,98 @@
     </div>
 
     <script src="script.js"></script>
+    
+    <!-- Fix for sidebar visibility issues -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force sidebar to be visible with a delay to ensure it runs after other scripts
+            setTimeout(function() {
+                console.log('Running emergency sidebar fix');
+                
+                // Access sidebar element directly
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) {
+                    sidebar.style.display = 'flex';
+                    sidebar.style.visibility = 'visible';
+                    sidebar.style.opacity = '1';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.zIndex = '1000';
+                    sidebar.style.position = 'fixed';
+                    console.log('Applied emergency sidebar fix');
+                    
+                    // Manually regenerate navigation links if needed
+                    const navLinks = document.getElementById('navLinks');
+                    if (navLinks && navLinks.children.length === 0) {
+                        console.log('NavLinks container is empty - forcing recreation');
+                        
+                        // Manually create navigation based on user type
+                        const savedUser = localStorage.getItem('healthBuddyUser');
+                        if (savedUser) {
+                            try {
+                                const user = JSON.parse(savedUser);
+                                if (user.type === 'doctor') {
+                                    // Doctor links
+                                    navLinks.innerHTML = `
+                                        <li><a href="#" data-page="doctorDashboard" class="nav-link active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                                        <li><a href="#" data-page="doctorAppointments" class="nav-link"><i class="fas fa-calendar-check"></i><span>Appointments</span></a></li>
+                                        <li><a href="#" data-page="startTests" class="nav-link"><i class="fas fa-flask"></i><span>Start Tests</span></a></li>
+                                        <li><a href="#" data-page="prescriptions" class="nav-link"><i class="fas fa-pills"></i><span>Prescriptions</span></a></li>
+                                        <li><a href="#" data-page="doctorReports" class="nav-link"><i class="fas fa-file-medical"></i><span>Reports</span></a></li>
+                                    `;
+                                } else {
+                                    // Patient links
+                                    navLinks.innerHTML = `
+                                        <li><a href="#" data-page="patientDashboard" class="nav-link active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                                        <li><a href="#" data-page="patientAppointments" class="nav-link"><i class="fas fa-calendar-check"></i><span>Appointments</span></a></li>
+                                        <li><a href="#" data-page="patientReports" class="nav-link"><i class="fas fa-file-medical"></i><span>Reports</span></a></li>
+                                    `;
+                                }
+                                
+                                // Add click events to the nav links
+                                navLinks.querySelectorAll('.nav-link').forEach(link => {
+                                    link.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        const pageId = this.dataset.page;
+                                        const pages = document.querySelectorAll('.content-page');
+                                        pages.forEach(page => page.classList.remove('active'));
+                                        document.getElementById(pageId).classList.add('active');
+                                        
+                                        // Update active link
+                                        navLinks.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                                        this.classList.add('active');
+                                        
+                                        // Close sidebar on mobile
+                                        if (window.innerWidth < 768) {
+                                            sidebar.classList.remove('active');
+                                        }
+                                        
+                                        // Set page title
+                                        const pageTitle = document.getElementById('pageTitle');
+                                        if (pageTitle) {
+                                            const titles = {
+                                                doctorDashboard: 'Doctor Dashboard',
+                                                patientDashboard: 'Patient Dashboard',
+                                                doctorAppointments: 'Appointments',
+                                                patientAppointments: 'My Appointments',
+                                                startTests: 'Start Tests',
+                                                prescriptions: 'Prescriptions',
+                                                doctorReports: 'Patient Reports',
+                                                patientReports: 'My Reports'
+                                            };
+                                            pageTitle.textContent = titles[pageId] || 'Dashboard';
+                                        }
+                                    });
+                                });
+                                
+                                console.log('Manual navigation setup complete');
+                            } catch (e) {
+                                console.error('Error in emergency sidebar fix:', e);
+                            }
+                        }
+                    }
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
