@@ -543,8 +543,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     await loadLabTechnicianData();
                 }
                 
-                // Show welcome notification
-                showToast(`Welcome, ${currentUser.name}!`, 'success');
+                // Only show welcome notification if this is a fresh login (not a page refresh)
+                // This prevents duplicate notifications
+                const isUserJustLoggedIn = true; // We're in the login form handler
+                if (isUserJustLoggedIn) {
+                    showToast(`Welcome, ${currentUser.name}!`, 'success');
+                }
             } else {
                 showToast('Invalid username or password. Please try again.', 'error');
                 // Reset button
