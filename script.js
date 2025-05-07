@@ -275,6 +275,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add debug info
                 console.log("Login check complete - user loaded:", user.name);
+                
+                // Note: We don't show welcome toast here since this is an auto-login from saved credentials
+                // This avoids duplicating welcome messages when the page is refreshed
             } catch (e) {
                 console.error("Error in checkExistingLogin:", e);
                 // Invalid saved user data
