@@ -1281,6 +1281,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create HTTP server
+  // Create test conflicts endpoint
+  app.post('/api/create-test-conflicts', async (req, res) => {
+    try {
+      // Get the latest appointment ID
+      const allAppointmentsResult = await db.query.appointments.findMany();
+      let lastId = 10; // Default to A010
+      
+      if (allAppointmentsResult.length > 0) {
+        const ids = allAppointmentsResult.map(a => {
+          const num = parseInt(a.id.substring(1));
+          return isNaN(num) ? 0 : num;
+        });
+        lastId = Math.max(...ids);
+      }
+      
+      // Create two appointments with the same doctor and time
+      const conflictDate = "2025-05-25"; // Future date
+      const conflictTime = "10:00";
+      
+      const appointments1 = {
+        id: `A${String(lastId + 1).padStart(3, '0')}`,
+        patientId: "P001",
+        patientName: "Priya Sharma",
+        doctorId: "D002",
+        doctorName: "Dr. Arvinder Singh",
+        date: conflictDate,
+        time: conflictTime,
+        purpose: "Test Conflict 1",
+        status: "Scheduled",
+        notes: "First conflicting appointment",
+        createdAt: new Date()
+      };
+      
+      const appointments2 = {
+        id: `A${String(lastId + 2).padStart(3, '0')}`,
+        patientId: "P002",
+        patientName: "Anil Kumar",
+        doctorId: "D002",
+        doctorName: "Dr. Arvinder Singh",
+        date: conflictDate,
+        time: conflictTime,
+        purpose: "Test Conflict 2",
+        status: "Scheduled",
+        notes: "Second conflicting appointment",
+        createdAt: new Date()
+      };
+      
+      // Insert the conflicting appointments
+      await db.insert(appointments).values(appointments1);
+      await db.insert(appointments).values(appointments2);
+      
+      res.status(200).json({
+        message: "Test conflicts created successfully",
+        appointments: [appointments1, appointments2]
+      });
+    } catch (error) {
+      console.error("Error creating test conflicts:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   const httpServer = createServer(app);
   
   return httpServer;
