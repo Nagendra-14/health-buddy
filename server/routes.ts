@@ -466,9 +466,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add flags for conflicting appointments (existing data)
       const appointmentsByDateAndTime: { [key: string]: { [key: string]: { [key: string]: any[] } } } = {};
+      const doctorAppointmentsByDateAndTime: { [key: string]: { [key: string]: { [key: string]: any[] } } } = {};
+      const patientAppointmentsByDateAndTime: { [key: string]: { [key: string]: { [key: string]: any[] } } } = {};
       
       // Group appointments by date, doctor, and time
       result.forEach(app => {
+        // Skip cancelled appointments for conflict detection
+        if (app.status === 'Cancelled') return;
+        
+        // For general appointments
         if (!appointmentsByDateAndTime[app.date]) {
           appointmentsByDateAndTime[app.date] = {};
         }
@@ -482,18 +488,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         appointmentsByDateAndTime[app.date][app.doctorId][app.time].push(app);
+        
+        // For doctor appointments
+        if (!doctorAppointmentsByDateAndTime[app.date]) {
+          doctorAppointmentsByDateAndTime[app.date] = {};
+        }
+        
+        if (!doctorAppointmentsByDateAndTime[app.date][app.doctorId]) {
+          doctorAppointmentsByDateAndTime[app.date][app.doctorId] = {};
+        }
+        
+        if (!doctorAppointmentsByDateAndTime[app.date][app.doctorId][app.time]) {
+          doctorAppointmentsByDateAndTime[app.date][app.doctorId][app.time] = [];
+        }
+        
+        doctorAppointmentsByDateAndTime[app.date][app.doctorId][app.time].push(app);
+        
+        // For patient appointments
+        if (!patientAppointmentsByDateAndTime[app.date]) {
+          patientAppointmentsByDateAndTime[app.date] = {};
+        }
+        
+        if (!patientAppointmentsByDateAndTime[app.date][app.patientId]) {
+          patientAppointmentsByDateAndTime[app.date][app.patientId] = {};
+        }
+        
+        if (!patientAppointmentsByDateAndTime[app.date][app.patientId][app.time]) {
+          patientAppointmentsByDateAndTime[app.date][app.patientId][app.time] = [];
+        }
+        
+        patientAppointmentsByDateAndTime[app.date][app.patientId][app.time].push(app);
       });
       
       // Add warning flag for conflicting appointments
       const resultWithWarnings = result.map(app => {
-        const conflictCount = appointmentsByDateAndTime[app.date]?.[app.doctorId]?.[app.time]?.length || 0;
+        // Skip cancelled appointments
+        if (app.status === 'Cancelled') return app;
         
-        // If more than one appointment exists at this time slot, it's conflicting
-        if (conflictCount > 1) {
+        // Check for doctor conflicts
+        const doctorConflictCount = doctorAppointmentsByDateAndTime[app.date]?.[app.doctorId]?.[app.time]?.length || 0;
+        
+        // Check for patient conflicts
+        const patientConflictCount = patientAppointmentsByDateAndTime[app.date]?.[app.patientId]?.[app.time]?.length || 0;
+        
+        // Flag conflicts
+        const hasConflict = doctorConflictCount > 1 || patientConflictCount > 1;
+        const conflictCount = Math.max(doctorConflictCount, patientConflictCount);
+        
+        // If there's a conflict, add warning flags
+        if (hasConflict) {
           return { 
             ...app, 
             hasConflict: true,
-            conflictCount: conflictCount
+            conflictCount: conflictCount,
+            conflictType: doctorConflictCount > 1 ? (patientConflictCount > 1 ? 'both' : 'doctor') : 'patient'
           };
         }
         
