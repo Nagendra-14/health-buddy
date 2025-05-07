@@ -904,8 +904,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Function to get 30-minute time slot from appointment time
+      const getTimeSlot = (appointmentTime: string): string => {
+        const [hours, minutes] = appointmentTime.split(':').map(Number);
+        // Return the slot start time (each slot is 30 minutes)
+        const slotMinute = minutes < 30 ? 0 : 30;
+        return `${hours.toString().padStart(2, '0')}:${slotMinute.toString().padStart(2, '0')}`;
+      };
+      
+      // Get the time slot for the new appointment
+      const newAppointmentSlot = getTimeSlot(time);
+      
       // Check for conflicting appointments (same doctor, same date, same time)
-      const existingAppointments = await db.query.appointments.findMany({
+      const doctorAppointments = await db.query.appointments.findMany({
         where: and(
           eq(appointments.doctorId, doctorId),
           eq(appointments.date, date)
@@ -915,16 +926,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Organize doctor's appointments by time slot
       const doctorTimeSlots = new Map();
       
-      // Function to get 30-minute time slot from appointment time
-      const getTimeSlot = (appointmentTime: string): string => {
-        const [hours, minutes] = appointmentTime.split(':').map(Number);
-        // Return the slot start time (each slot is 30 minutes)
-        const slotMinute = minutes < 30 ? 0 : 30;
-        return `${hours.toString().padStart(2, '0')}:${slotMinute.toString().padStart(2, '0')}`;
-      };
-      
       // Map existing appointments to 30-minute slots
-      existingAppointments.forEach(app => {
+      doctorAppointments.forEach(app => {
         // Skip cancelled appointments
         if (app.status === 'Cancelled') return;
         
@@ -932,10 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doctorTimeSlots.set(timeSlot, app);
       });
       
-      // Get the time slot for the new appointment
-      const newAppointmentSlot = getTimeSlot(time);
-      
-      // Check if the time slot is already booked
+      // Check if the doctor's time slot is already booked
       if (doctorTimeSlots.has(newAppointmentSlot)) {
         const conflictingAppointment = doctorTimeSlots.get(newAppointmentSlot);
         return res.status(409).json({ 
@@ -943,6 +943,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           conflictingAppointment: {
             time: conflictingAppointment.time,
             patientName: conflictingAppointment.patientName
+          }
+        });
+      }
+      
+      // ALSO check if the patient already has an appointment at this time
+      const patientAppointments = await db.query.appointments.findMany({
+        where: and(
+          eq(appointments.patientId, patientId),
+          eq(appointments.date, date)
+        )
+      });
+      
+      // Organize patient's appointments by time slot
+      const patientTimeSlots = new Map();
+      
+      // Map existing patient appointments to 30-minute slots
+      patientAppointments.forEach(app => {
+        // Skip cancelled appointments
+        if (app.status === 'Cancelled') return;
+        
+        const timeSlot = getTimeSlot(app.time);
+        patientTimeSlots.set(timeSlot, app);
+      });
+      
+      // Check if the patient already has an appointment at this time
+      if (patientTimeSlots.has(newAppointmentSlot)) {
+        const conflictingAppointment = patientTimeSlots.get(newAppointmentSlot);
+        return res.status(409).json({ 
+          message: `You already have an appointment at this time with Dr. ${conflictingAppointment.doctorName}. Please select a different time.`,
+          conflictingAppointment: {
+            time: conflictingAppointment.time,
+            doctorName: conflictingAppointment.doctorName
           }
         });
       }
