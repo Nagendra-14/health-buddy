@@ -912,9 +912,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function showDashboard() {
         const loginPage = document.getElementById('loginPage');
         const dashboardPage = document.getElementById('dashboardPage');
+        const sidebar = document.getElementById('sidebar');
+        
+        // Make sure sidebar is visible and reset any transforms
+        if (sidebar) {
+            sidebar.style.transform = window.innerWidth <= 768 ? 'translateX(-100%)' : 'translateX(0)';
+            console.log("Sidebar visibility set for width:", window.innerWidth);
+        } else {
+            console.error("Sidebar element not found!");
+        }
         
         loginPage.classList.remove('active');
         dashboardPage.classList.add('active');
+        
+        // Ensure main content positioning is correct
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.marginLeft = window.innerWidth <= 768 ? '0' : '260px';
+            console.log("Main content margin set for width:", window.innerWidth);
+        }
     }
     
     // Set up navigation based on user type
