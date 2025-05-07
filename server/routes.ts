@@ -446,9 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(result);
       }
       
-      // Execute the query
-      const appointmentsData = await query;
-      res.json(appointmentsData);
+      // This section is now handled by the code above
     } catch (error) {
       console.error('Error getting appointments:', error);
       res.status(500).json({ message: 'Internal server error' });
@@ -461,20 +459,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doctorId = req.query.doctorId as string;
       const patientId = req.query.patientId as string;
       
-      let query = db.select().from(prescriptions);
+      let prescriptionsData;
       
       // Filter prescriptions by doctorId if provided
       if (doctorId) {
-        query = db.select().from(prescriptions).where(eq(prescriptions.doctorId, doctorId));
-      }
-      
+        prescriptionsData = await db.query.prescriptions.findMany({
+          where: eq(prescriptions.doctorId, doctorId)
+        });
+      } 
       // Filter prescriptions by patientId if provided
-      if (patientId) {
-        query = db.select().from(prescriptions).where(eq(prescriptions.patientId, patientId));
+      else if (patientId) {
+        prescriptionsData = await db.query.prescriptions.findMany({
+          where: eq(prescriptions.patientId, patientId)
+        });
       }
-      
-      // Execute the query
-      const prescriptionsData = await query;
+      // Get all prescriptions if no filter is provided
+      else {
+        prescriptionsData = await db.query.prescriptions.findMany();
+      }
       
       // Parse medications from JSON string
       const results = prescriptionsData.map(prescription => ({
@@ -569,20 +571,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doctorId = req.query.doctorId as string;
       const patientId = req.query.patientId as string;
       
-      let query = db.select().from(tests);
+      let testsData;
       
       // Filter tests by doctorId if provided
       if (doctorId) {
-        query = db.select().from(tests).where(eq(tests.doctorId, doctorId));
+        testsData = await db.query.tests.findMany({
+          where: eq(tests.doctorId, doctorId)
+        });
       }
-      
       // Filter tests by patientId if provided
-      if (patientId) {
-        query = db.select().from(tests).where(eq(tests.patientId, patientId));
+      else if (patientId) {
+        testsData = await db.query.tests.findMany({
+          where: eq(tests.patientId, patientId)
+        });
       }
-      
-      // Execute the query
-      const testsData = await query;
+      // Get all tests if no filter is provided
+      else {
+        testsData = await db.query.tests.findMany();
+      }
       res.json(testsData);
     } catch (error) {
       console.error('Error getting tests:', error);
@@ -669,23 +675,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patientId = req.query.patientId as string;
       const category = req.query.category as string;
       
-      let query = db.select().from(reports);
+      let whereConditions = {};
       
       // Apply filters if provided
       if (doctorId) {
-        query = db.select().from(reports).where(eq(reports.doctorId, doctorId));
+        whereConditions = { ...whereConditions, doctorId };
       }
       
       if (patientId) {
-        query = db.select().from(reports).where(eq(reports.patientId, patientId));
+        whereConditions = { ...whereConditions, patientId };
       }
       
-      if (category) {
-        query = db.select().from(reports).where(eq(reports.category, category));
+      if (category && category !== 'all') {
+        whereConditions = { ...whereConditions, category };
       }
       
-      // Execute the query
-      const reportsData = await query;
+      // Execute query with filters
+      const reportsData = Object.keys(whereConditions).length > 0
+        ? await db.query.reports.findMany({ 
+            where: (reports, { eq, and }) => {
+              const conditions = [];
+              if (whereConditions.doctorId) {
+                conditions.push(eq(reports.doctorId, whereConditions.doctorId));
+              }
+              if (whereConditions.patientId) {
+                conditions.push(eq(reports.patientId, whereConditions.patientId));
+              }
+              if (whereConditions.category) {
+                conditions.push(eq(reports.category, whereConditions.category));
+              }
+              return and(...conditions);
+            }
+          })
+        : await db.query.reports.findMany();
       res.json(reportsData);
     } catch (error) {
       console.error('Error getting reports:', error);
