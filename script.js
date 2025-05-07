@@ -1751,7 +1751,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show toast notification
+    // Keep track of active toasts
+    let toastActive = false;
+    let toastQueue = [];
+    
     function showToast(message, type = 'success') {
+        // If there's already a toast showing, queue this one
+        if (toastActive) {
+            toastQueue.push({message, type});
+            return;
+        }
+        
+        toastActive = true;
         const toast = document.getElementById('toast');
         const toastMessage = toast.querySelector('.toast-message');
         
@@ -1764,6 +1775,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide after 3 seconds
         setTimeout(() => {
             toast.classList.remove('show');
+            
+            // Set a small delay before allowing the next toast
+            setTimeout(() => {
+                toastActive = false;
+                
+                // Show next toast in queue if any
+                if (toastQueue.length > 0) {
+                    const nextToast = toastQueue.shift();
+                    showToast(nextToast.message, nextToast.type);
+                }
+            }, 300);
         }, 3000);
     }
     
