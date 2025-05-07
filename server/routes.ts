@@ -8,7 +8,7 @@ import {
   doctors, patients, pendingDoctors, appointments, 
   tests, prescriptions, reports, userVisits 
 } from '../shared/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, ne } from 'drizzle-orm';
 
 // Get the directory name from the file URL
 const __filename = fileURLToPath(import.meta.url);
@@ -916,6 +916,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ];
     
     res.json(testTypes);
+  });
+  
+  // Update an existing appointment
+  app.put('/api/appointments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes, time, date } = req.body;
+
+      // Check if appointment exists
+      const appointment = await db.query.appointments.findFirst({
+        where: eq(appointments.id, id)
+      });
+
+      if (!appointment) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+
+      // If time or date is being changed, check for conflicts
+      if ((time && time !== appointment.time) || (date && date !== appointment.date)) {
+        // New date and time values to check against
+        const newDate = date || appointment.date;
+        const newTime = time || appointment.time;
+        
+        // Check if the doctor already has an appointment at this time
+        const existingDoctorAppointments = await db.query.appointments.findMany({
+          where: and(
+            eq(appointments.doctorId, appointment.doctorId),
+            eq(appointments.date, newDate),
+            eq(appointments.time, newTime),
+            ne(appointments.id, id) // Exclude the current appointment
+          )
+        });
+        
+        // Check if the patient already has an appointment at this time
+        const existingPatientAppointments = await db.query.appointments.findMany({
+          where: and(
+            eq(appointments.patientId, appointment.patientId),
+            eq(appointments.date, newDate),
+            eq(appointments.time, newTime),
+            ne(appointments.id, id) // Exclude the current appointment
+          )
+        });
+        
+        // Handle conflicts
+        if (existingDoctorAppointments.length > 0) {
+          return res.status(409).json({ 
+            message: 'Doctor already has an appointment at this time',
+            conflict: 'doctor',
+            existingAppointments: existingDoctorAppointments
+          });
+        }
+        
+        if (existingPatientAppointments.length > 0) {
+          return res.status(409).json({ 
+            message: 'Patient already has an appointment at this time',
+            conflict: 'patient',
+            existingAppointments: existingPatientAppointments
+          });
+        }
+      }
+
+      // Update appointment with all provided fields
+      const updateData: any = {};
+      if (status !== undefined) updateData.status = status;
+      if (notes !== undefined) updateData.notes = notes;
+      if (time !== undefined) updateData.time = time;
+      if (date !== undefined) updateData.date = date;
+      
+      await db.update(appointments)
+        .set(updateData)
+        .where(eq(appointments.id, id));
+
+      res.status(200).json({ 
+        message: 'Appointment updated successfully',
+        appointment: {
+          ...appointment,
+          ...updateData
+        }
+      });
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   });
   
   // Add endpoint for creating appointments
