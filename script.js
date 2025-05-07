@@ -1633,37 +1633,82 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show prescription details in a modal
     function showPrescriptionDetails(prescription) {
-        const modal = document.getElementById('prescriptionDetailsModal') || createPrescriptionDetailsModal();
+        console.log('Showing prescription details:', prescription);
         
-        // Update modal content
-        modal.querySelector('.modal-title').textContent = 'Prescription Details';
-        
-        const modalBody = modal.querySelector('.modal-body');
-        
-        // Format medications list
-        let medicationsHtml = '<ul class="medications-list">';
-        if (prescription.medications && prescription.medications.length > 0) {
-            prescription.medications.forEach(med => {
-                medicationsHtml += `<li><strong>${med.name}</strong> - ${med.dosage}</li>`;
-            });
-        } else {
-            medicationsHtml += '<li>No medications listed</li>';
+        try {
+            // Create modal if it doesn't exist
+            const modal = document.getElementById('prescriptionDetailsModal') || createPrescriptionDetailsModal();
+            
+            // Update modal content
+            modal.querySelector('.modal-title').textContent = 'Prescription Details';
+            
+            const modalBody = modal.querySelector('.modal-body');
+            
+            // Format medications list
+            let medicationsHtml = '<ul class="medications-list">';
+            if (prescription.medications && prescription.medications.length > 0) {
+                prescription.medications.forEach(med => {
+                    const dosage = med.dosage || 'Dosage not specified';
+                    medicationsHtml += `<li><strong>${med.name}</strong> - ${dosage}</li>`;
+                });
+            } else {
+                medicationsHtml += '<li>No medications listed</li>';
+            }
+            medicationsHtml += '</ul>';
+            
+            // Format validity period
+            const fromDate = prescription.validFrom 
+                ? formatDate(prescription.validFrom) 
+                : formatDate(prescription.date);
+                
+            let untilDate = 'Ongoing';
+            if (prescription.validUntil) {
+                untilDate = formatDate(prescription.validUntil);
+            } else {
+                // If no validUntil, assume 30 days from date as default
+                const dateObj = new Date(prescription.date);
+                dateObj.setDate(dateObj.getDate() + 30);
+                untilDate = formatDate(dateObj);
+            }
+            
+            // Build the modal content with appropriate fallbacks for missing data
+            modalBody.innerHTML = `
+                <div class="prescription-details">
+                    <div class="prescription-header">
+                        <p class="prescription-id"><strong>Prescription ID:</strong> ${prescription.id}</p>
+                        <p class="prescription-date"><strong>Date Issued:</strong> ${formatDate(prescription.date)}</p>
+                    </div>
+                    
+                    <div class="patient-doctor-info">
+                        <p><strong>Doctor:</strong> ${prescription.doctorName}</p>
+                        <p><strong>Patient:</strong> ${prescription.patientName}</p>
+                    </div>
+                    
+                    <div class="prescription-primary-info">
+                        <p><strong>Diagnosis:</strong> ${prescription.diagnosis || 'Not specified'}</p>
+                        <p><strong>Valid Period:</strong> ${fromDate} to ${untilDate}</p>
+                    </div>
+                    
+                    <div class="medications-section">
+                        <p><strong>Medications:</strong></p>
+                        ${medicationsHtml}
+                    </div>
+                    
+                    ${prescription.instructions ? 
+                        `<div class="instructions-section">
+                            <p><strong>Instructions:</strong> ${prescription.instructions}</p>
+                         </div>` 
+                      : ''}
+                </div>
+            `;
+            
+            // Display modal
+            modal.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error displaying prescription details:', error);
+            showToast('Error displaying prescription details', 'error');
         }
-        medicationsHtml += '</ul>';
-        
-        modalBody.innerHTML = `
-            <div class="prescription-details">
-                <p><strong>Doctor:</strong> ${prescription.doctorName}</p>
-                <p><strong>Date:</strong> ${formatDate(prescription.date)}</p>
-                <p><strong>Diagnosis:</strong> ${prescription.diagnosis}</p>
-                <p><strong>Medications:</strong></p>
-                ${medicationsHtml}
-                ${prescription.instructions ? `<p><strong>Instructions:</strong> ${prescription.instructions}</p>` : ''}
-            </div>
-        `;
-        
-        // Display modal
-        modal.style.display = 'block';
     }
     
     // Create modal for appointment details if it doesn't exist
@@ -2068,6 +2113,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Loading patient prescriptions for patient ID:', currentUser.id);
             
+            // Show a loading message in case prescriptions take time to load
+            showToast('Loading your prescriptions...', 'info');
+            
             // Check if the patient prescriptions page exists, if not create it
             if (!document.getElementById('patientPrescriptions')) {
                 createPatientPrescriptionsPage();
@@ -2085,45 +2133,75 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Clear the table
             patientPrescriptionsTable.innerHTML = '';
             
-            if (patientPrescriptions.length > 0) {
-                // Sort by date, most recent first
+            if (patientPrescriptions && patientPrescriptions.length > 0) {
+                console.log('Processing prescriptions for display:', patientPrescriptions.length);
+                
+                // Sort by date, most recent first (use the date field instead of validFrom which may not exist)
                 const sortedPrescriptions = [...patientPrescriptions].sort((a, b) => 
-                    new Date(b.validFrom) - new Date(a.validFrom)
+                    new Date(b.date) - new Date(a.date)
                 );
                 
                 sortedPrescriptions.forEach(prescription => {
+                    console.log('Processing prescription:', prescription.id);
+                    
+                    // Handle medication names
                     const medicationNames = prescription.medications 
                         ? prescription.medications.map(med => med.name).join(', ')
                         : prescription.details || 'No medications listed';
-                        
+                    
+                    // Format dates in a safe way
+                    const fromDate = prescription.validFrom 
+                        ? formatDate(prescription.validFrom) 
+                        : formatDate(prescription.date);
+                    
+                    // Calculate until date if not provided
+                    let untilDate = 'Ongoing';
+                    if (prescription.validUntil) {
+                        untilDate = formatDate(prescription.validUntil);
+                    } else {
+                        // If no validUntil, assume 30 days from date as default
+                        const dateObj = new Date(prescription.date);
+                        dateObj.setDate(dateObj.getDate() + 30);
+                        untilDate = formatDate(dateObj);
+                    }
+                    
+                    // Create the row
                     const tr = document.createElement('tr');
                     tr.classList.add('clickable-row');
                     tr.innerHTML = `
                         <td>${prescription.doctorName}</td>
                         <td>${prescription.diagnosis || 'Not specified'}</td>
                         <td>${truncateText(medicationNames, 30)}</td>
-                        <td>${formatDate(prescription.validFrom)} - ${formatDate(prescription.validUntil)}</td>
+                        <td>${fromDate} - ${untilDate}</td>
                         <td>
                             <button class="btn btn-icon view-prescription" title="View Details"><i class="fas fa-eye"></i></button>
                         </td>
                     `;
                     
                     // Add event listener for view button
-                    tr.querySelector('.view-prescription').addEventListener('click', function(e) {
-                        e.stopPropagation(); // Prevent row click event
-                        showPrescriptionDetails(prescription);
-                    });
+                    const viewBtn = tr.querySelector('.view-prescription');
+                    if (viewBtn) {
+                        viewBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Prevent row click event
+                            showPrescriptionDetails(prescription);
+                        });
+                    }
                     
                     // Make entire row clickable
                     tr.addEventListener('click', function() {
                         showPrescriptionDetails(prescription);
                     });
                     
+                    // Add the row to the table
                     patientPrescriptionsTable.appendChild(tr);
                 });
+                
+                showToast('Prescriptions loaded successfully', 'success');
             } else {
+                console.log('No prescriptions found for this patient');
                 patientPrescriptionsTable.innerHTML = '<tr><td colspan="5" class="text-center">No prescriptions found</td></tr>';
             }
         } catch (error) {
