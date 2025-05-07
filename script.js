@@ -3143,6 +3143,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw error;
             }
             
+            // Format time to match 30-minute slots (either HH:00 or HH:30)
+            const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+            if (timeRegex.test(appointmentData.time)) {
+                const [_, hour, minute] = appointmentData.time.match(timeRegex);
+                const roundedMinute = parseInt(minute) < 30 ? '00' : '30';
+                appointmentData.time = `${hour.padStart(2, '0')}:${roundedMinute}`;
+                console.log('Standardized appointment time to 30-minute slot:', appointmentData.time);
+            }
+            
             const response = await fetch('/api/appointments', {
                 method: 'POST',
                 headers: {
@@ -3160,6 +3169,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Failed to parse response:', responseText);
                 showToast('Server returned an invalid response', 'error');
                 throw new Error('Invalid server response');
+            }
+            
+            // Handle conflict (409) status code specifically for double-booking
+            if (response.status === 409) {
+                console.error('Time slot conflict:', result);
+                
+                // Show a more detailed error message with the conflicting appointment details
+                if (result.conflictingAppointment) {
+                    const conflict = result.conflictingAppointment;
+                    showToast(`The doctor already has an appointment at ${conflict.time} with ${conflict.patientName}. Please select a different time.`, 'error');
+                } else {
+                    showToast(result.message || 'This time slot is already booked. Please select a different time.', 'error');
+                }
+                
+                // Return a specific result so the UI can handle the conflict
+                return { success: false, error: 'conflict', message: result.message, details: result.conflictingAppointment };
             }
             
             if (!response.ok) {

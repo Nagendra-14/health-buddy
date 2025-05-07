@@ -869,6 +869,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { patientId, doctorId, date, time, purpose, notes, status } = req.body;
       
+      // Validate time format (should be in HH:MM format)
+      const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        return res.status(400).json({ 
+          message: 'Invalid time format. Time should be in HH:MM format (24-hour)' 
+        });
+      }
+      
+      // Check for conflicting appointments (same doctor, same date, same time)
+      const existingAppointments = await db.query.appointments.findMany({
+        where: and(
+          eq(appointments.doctorId, doctorId),
+          eq(appointments.date, date)
+        )
+      });
+      
+      // Organize doctor's appointments by time slot
+      const doctorTimeSlots = new Map();
+      
+      // Function to get 30-minute time slot from appointment time
+      const getTimeSlot = (appointmentTime) => {
+        const [hours, minutes] = appointmentTime.split(':').map(Number);
+        // Return the slot start time (each slot is 30 minutes)
+        const slotMinute = minutes < 30 ? 0 : 30;
+        return `${hours.toString().padStart(2, '0')}:${slotMinute.toString().padStart(2, '0')}`;
+      };
+      
+      // Map existing appointments to 30-minute slots
+      existingAppointments.forEach(app => {
+        // Skip cancelled appointments
+        if (app.status === 'Cancelled') return;
+        
+        const timeSlot = getTimeSlot(app.time);
+        doctorTimeSlots.set(timeSlot, app);
+      });
+      
+      // Get the time slot for the new appointment
+      const newAppointmentSlot = getTimeSlot(time);
+      
+      // Check if the time slot is already booked
+      if (doctorTimeSlots.has(newAppointmentSlot)) {
+        const conflictingAppointment = doctorTimeSlots.get(newAppointmentSlot);
+        return res.status(409).json({ 
+          message: `The doctor already has an appointment at this time with ${conflictingAppointment.patientName}. Please select a different time.`,
+          conflictingAppointment: {
+            time: conflictingAppointment.time,
+            patientName: conflictingAppointment.patientName
+          }
+        });
+      }
+      
       // Generate a new ID based on the highest existing ID
       const allAppointmentsResult = await db.query.appointments.findMany();
       const lastId = allAppointmentsResult.length > 0 
@@ -889,7 +940,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid patient or doctor ID' });
       }
       
-      // Create new appointment
+      // Create new appointment - standardize time to MM:30 or MM:00 format
+      const standardizedTime = time.replace(timeRegex, (match, hour, minute) => {
+        const mins = parseInt(minute) < 30 ? '00' : '30';
+        return `${hour.padStart(2, '0')}:${mins}`;
+      });
+      
       const newAppointment = {
         id: newId,
         patientId,
@@ -897,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doctorId,
         doctorName: doctor.name,
         date,
-        time,
+        time: standardizedTime,
         purpose: purpose || 'General Consultation',
         notes: notes || '',
         status: status || 'Scheduled',
