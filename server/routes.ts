@@ -1011,7 +1011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/appointments/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const { status, notes, time, date } = req.body;
+      const { status, notes, time, date, purpose } = req.body;
 
       // Check if appointment exists
       const appointment = await db.query.appointments.findFirst({
@@ -1072,6 +1072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (notes !== undefined) updateData.notes = notes;
       if (time !== undefined) updateData.time = time;
       if (date !== undefined) updateData.date = date;
+      if (purpose !== undefined) updateData.purpose = purpose;
       
       await db.update(appointments)
         .set(updateData)
@@ -1086,6 +1087,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error updating appointment:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
+  // Delete an appointment
+  app.delete('/api/appointments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if appointment exists
+      const appointment = await db.query.appointments.findFirst({
+        where: eq(appointments.id, id)
+      });
+      
+      if (!appointment) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+      
+      // Delete the appointment
+      await db.delete(appointments).where(eq(appointments.id, id));
+      
+      res.status(200).json({ 
+        message: 'Appointment deleted successfully',
+        appointment
+      });
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
