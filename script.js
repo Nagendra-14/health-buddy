@@ -2822,6 +2822,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Helper function to populate any test type dropdown with consistent options
+    // Expose this to window so it can be called from other scripts (like user-role-functions.js)
     async function populateTestTypeDropdown(selectElementId) {
         const selectElement = document.getElementById(selectElementId);
         if (!selectElement) {
@@ -2852,6 +2853,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error(`Error populating test type dropdown ${selectElementId}:`, error);
         }
     }
+    
+    // Expose the function to the window object so it can be called from other scripts
+    window.populateTestTypeDropdown = populateTestTypeDropdown;
     
     // Load recent tests
     async function loadRecentTests() {

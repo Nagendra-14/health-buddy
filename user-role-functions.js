@@ -140,6 +140,25 @@ async function loadLabTechnicianData() {
                 patientsElement.textContent = uniquePatients.size;
             }
             
+            // Populate test type filter dropdown using the centralized function
+            if (window.populateTestTypeDropdown) {
+                try {
+                    await window.populateTestTypeDropdown('testTypeFilter');
+                    // Add "All Tests" option at the beginning
+                    const allOption = document.createElement('option');
+                    allOption.value = "";
+                    allOption.textContent = "All Tests";
+                    const testTypeFilter = document.getElementById('testTypeFilter');
+                    if (testTypeFilter) {
+                        testTypeFilter.insertBefore(allOption, testTypeFilter.firstChild);
+                    }
+                } catch (err) {
+                    console.error('Error populating test type filter:', err);
+                }
+            } else {
+                console.error('populateTestTypeDropdown function not available');
+            }
+            
             // Update pending tests table
             const testsList = document.getElementById('labTechnicianTestsList');
             if (testsList) {
