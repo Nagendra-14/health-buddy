@@ -428,6 +428,40 @@ label {
     color: var(--primary);
 }
 
+/* Dynamic layout controls */
+.layout-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-bottom: 1px solid var(--gray-200);
+    gap: var(--spacing-sm);
+}
+
+.layout-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
+    color: var(--gray-600);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.layout-btn:hover {
+    background-color: var(--gray-200);
+    color: var(--primary);
+}
+
+.layout-btn.active {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
 .user-info {
     display: flex;
     align-items: center;
@@ -1152,6 +1186,59 @@ body.mobile-device .status-badge {
     z-index: 1000 !important;
     /* Allow dynamic positioning based on screen size */
     transform: none !important;
+}
+
+/* Dynamic Layout Classes */
+body.layout-compact .sidebar {
+    width: 80px !important;
+}
+
+body.layout-compact .logo-text,
+body.layout-compact .user-details,
+body.layout-compact .nav-link span,
+body.layout-compact .layout-controls {
+    display: none !important;
+}
+
+body.layout-compact .avatar {
+    margin-right: 0 !important;
+}
+
+body.layout-compact .user-info,
+body.layout-compact nav a {
+    justify-content: center !important;
+    padding: var(--spacing-md) !important;
+}
+
+body.layout-compact nav a i {
+    margin-right: 0 !important;
+    font-size: 1.5rem !important;
+}
+
+body.layout-compact .main-content {
+    margin-left: 80px !important;
+}
+
+/* Expanded layout */
+body.layout-expanded .sidebar {
+    width: 280px !important;
+}
+
+body.layout-expanded .main-content {
+    margin-left: 280px !important;
+}
+
+@media (max-width: 768px) {
+    /* For mobile/tablet, layout adjustments are different */
+    body.layout-compact .sidebar:not(.active),
+    body.layout-expanded .sidebar:not(.active) {
+        transform: translateX(-100%) !important;
+    }
+    
+    body.layout-compact .main-content,
+    body.layout-expanded .main-content {
+        margin-left: 0 !important;
+    }
 }
 
 #dashboardPage.active .main-content {

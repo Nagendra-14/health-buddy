@@ -1073,6 +1073,74 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Finally, update the user info in the sidebar
         updateUserInfo();
+        
+        // Set up layout controls
+        setupLayoutControls();
+    }
+    
+    // Handle dynamic layout controls
+    function setupLayoutControls() {
+        // Layout control buttons
+        const layoutCompact = document.getElementById('layoutCompact');
+        const layoutDefault = document.getElementById('layoutDefault');
+        const layoutExpanded = document.getElementById('layoutExpanded');
+        
+        if (layoutCompact && layoutDefault && layoutExpanded) {
+            console.log("Setting up dynamic layout controls");
+            
+            // Compact layout (minimal sidebar)
+            layoutCompact.addEventListener('click', function() {
+                document.body.classList.remove('layout-expanded');
+                document.body.classList.add('layout-compact');
+                
+                // Update active state
+                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Save preference to localStorage
+                localStorage.setItem('healthBuddyLayout', 'compact');
+            });
+            
+            // Default layout
+            layoutDefault.addEventListener('click', function() {
+                document.body.classList.remove('layout-compact', 'layout-expanded');
+                
+                // Update active state
+                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Save preference to localStorage
+                localStorage.setItem('healthBuddyLayout', 'default');
+            });
+            
+            // Expanded layout (wider content)
+            layoutExpanded.addEventListener('click', function() {
+                document.body.classList.remove('layout-compact');
+                document.body.classList.add('layout-expanded');
+                
+                // Update active state
+                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Save preference to localStorage
+                localStorage.setItem('healthBuddyLayout', 'expanded');
+            });
+            
+            // Load user's saved preference
+            const savedLayout = localStorage.getItem('healthBuddyLayout');
+            if (savedLayout) {
+                switch(savedLayout) {
+                    case 'compact':
+                        layoutCompact.click();
+                        break;
+                    case 'expanded':
+                        layoutExpanded.click();
+                        break;
+                    default:
+                        layoutDefault.click();
+                }
+            }
+        }
     }
     
     // Navigate to a specific page
