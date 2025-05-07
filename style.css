@@ -559,7 +559,10 @@ nav a i {
 .main-content {
     margin-left: 260px;
     padding: var(--spacing-lg);
-    transition: margin-left var(--transition);
+    transition: all var(--transition);
+    width: calc(100% - 260px);
+    position: absolute;
+    right: 0;
 }
 
 .header {
@@ -1191,6 +1194,8 @@ body.mobile-device .status-badge {
 /* Dynamic Layout Classes */
 body.layout-compact .sidebar {
     width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
 }
 
 body.layout-compact .logo-text,
@@ -1217,27 +1222,61 @@ body.layout-compact nav a i {
 
 body.layout-compact .main-content {
     margin-left: 80px !important;
+    width: calc(100% - 80px) !important;
+}
+
+/* Default layout */
+body:not(.layout-compact):not(.layout-expanded) .sidebar {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+}
+
+body:not(.layout-compact):not(.layout-expanded) .main-content {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
 }
 
 /* Expanded layout */
 body.layout-expanded .sidebar {
     width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
 }
 
 body.layout-expanded .main-content {
     margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
 }
 
 @media (max-width: 768px) {
     /* For mobile/tablet, layout adjustments are different */
     body.layout-compact .sidebar:not(.active),
-    body.layout-expanded .sidebar:not(.active) {
+    body.layout-expanded .sidebar:not(.active),
+    body:not(.layout-compact):not(.layout-expanded) .sidebar:not(.active) {
         transform: translateX(-100%) !important;
     }
     
     body.layout-compact .main-content,
-    body.layout-expanded .main-content {
+    body.layout-expanded .main-content,
+    body:not(.layout-compact):not(.layout-expanded) .main-content {
         margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* When sidebar is active on mobile */
+    body.layout-compact .sidebar.active,
+    body.layout-expanded .sidebar.active,
+    body:not(.layout-compact):not(.layout-expanded) .sidebar.active {
+        width: 260px !important; 
+        min-width: 260px !important;
+        max-width: 260px !important;
+        z-index: 2000 !important;
+    }
+    
+    /* Layout buttons are all visible on mobile even in compact mode */
+    body.layout-compact .layout-controls {
+        display: flex !important;
     }
 }
 

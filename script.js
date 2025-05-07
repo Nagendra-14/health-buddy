@@ -1090,7 +1090,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Compact layout (minimal sidebar)
             layoutCompact.addEventListener('click', function() {
+                // Remove other layout classes first
                 document.body.classList.remove('layout-expanded');
+                
+                // Force reset any inline styles that might be interfering
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                
+                if (sidebar) {
+                    sidebar.style.width = '';
+                    sidebar.style.minWidth = '';
+                    sidebar.style.maxWidth = '';
+                }
+                
+                if (mainContent) {
+                    mainContent.style.marginLeft = '';
+                    mainContent.style.width = '';
+                }
+                
+                // Add compact layout class
                 document.body.classList.add('layout-compact');
                 
                 // Update active state
@@ -1103,7 +1121,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Default layout
             layoutDefault.addEventListener('click', function() {
+                // Remove all layout classes
                 document.body.classList.remove('layout-compact', 'layout-expanded');
+                
+                // Force reset any inline styles that might be interfering
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                
+                if (sidebar) {
+                    sidebar.style.width = '';
+                    sidebar.style.minWidth = '';
+                    sidebar.style.maxWidth = '';
+                }
+                
+                if (mainContent) {
+                    mainContent.style.marginLeft = '';
+                    mainContent.style.width = '';
+                }
                 
                 // Update active state
                 document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
@@ -1115,7 +1149,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Expanded layout (wider content)
             layoutExpanded.addEventListener('click', function() {
+                // Remove other layout classes first
                 document.body.classList.remove('layout-compact');
+                
+                // Force reset any inline styles that might be interfering
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                
+                if (sidebar) {
+                    sidebar.style.width = '';
+                    sidebar.style.minWidth = '';
+                    sidebar.style.maxWidth = '';
+                }
+                
+                if (mainContent) {
+                    mainContent.style.marginLeft = '';
+                    mainContent.style.width = '';
+                }
+                
+                // Add expanded layout class
                 document.body.classList.add('layout-expanded');
                 
                 // Update active state
