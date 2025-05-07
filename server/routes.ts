@@ -751,8 +751,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(testTypes);
   });
   
+  // Add endpoint for creating appointments
+  app.post('/api/appointments', async (req, res) => {
+    try {
+      const { patientId, doctorId, date, time, purpose, notes, status } = req.body;
+      
+      // Generate a new ID based on the highest existing ID
+      const allAppointmentsResult = await db.query.appointments.findMany();
+      const lastId = allAppointmentsResult.length > 0 
+        ? parseInt(allAppointmentsResult[allAppointmentsResult.length - 1].id.substring(1))
+        : 0;
+      const newId = `A${String(lastId + 1).padStart(3, '0')}`;
+      
+      // Get patient and doctor names
+      const patient = await db.query.patients.findFirst({
+        where: eq(patients.id, patientId)
+      });
+      
+      const doctor = await db.query.doctors.findFirst({
+        where: eq(doctors.id, doctorId)
+      });
+      
+      if (!patient || !doctor) {
+        return res.status(400).json({ message: 'Invalid patient or doctor ID' });
+      }
+      
+      // Create new appointment
+      const newAppointment = {
+        id: newId,
+        patientId,
+        patientName: patient.name,
+        doctorId,
+        doctorName: doctor.name,
+        date,
+        time,
+        purpose: purpose || 'General Consultation',
+        notes: notes || '',
+        status: status || 'Scheduled',
+        createdAt: new Date()
+      };
+      
+      // Add to appointments
+      await db.insert(appointments).values(newAppointment);
+      
+      // Return success
+      res.status(201).json({
+        message: 'Appointment created successfully',
+        appointment: newAppointment
+      });
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Record user visit for analytics
-  app.post('/api/visit', async (req, res) => {
+  app.post('/api/visits', async (req, res) => {
     try {
       const { userId } = req.body;
       
