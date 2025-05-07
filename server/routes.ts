@@ -655,6 +655,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { patientId, patientName, doctorId, doctorName, testType, results, notes } = req.body;
       
+      // Verify that the doctor exists
+      const doctor = await db.query.doctors.findFirst({
+        where: eq(doctors.id, doctorId)
+      });
+      
+      if (!doctor) {
+        // If doctor doesn't exist, try getting the first verified doctor
+        const firstDoctor = await db.query.doctors.findFirst({
+          where: eq(doctors.verified, true)
+        });
+        
+        if (!firstDoctor) {
+          return res.status(400).json({ message: "No valid doctor found to assign the test" });
+        }
+        
+        // Use this doctor instead
+        console.log(`Doctor ID ${doctorId} not found. Using doctor ${firstDoctor.id} instead.`);
+        doctorId = firstDoctor.id;
+        doctorName = firstDoctor.name;
+      }
+      
       // Find the highest existing ID
       const existingTests = await db.query.tests.findMany();
       const lastId = existingTests.length > 0
