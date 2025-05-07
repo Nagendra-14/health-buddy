@@ -225,11 +225,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentUser = user;
                 document.body.dataset.userType = user.type;
                 
-                // Ensure the dashboard page is visible
+                // Hide login page
                 const loginPage = document.getElementById('loginPage');
-                const dashboardPage = document.getElementById('dashboardPage');
                 loginPage.classList.remove('active');
-                dashboardPage.classList.add('active');
                 
                 // Explicitly ensure the sidebar is visible by directly accessing it
                 const sidebar = document.getElementById('sidebar');
@@ -246,6 +244,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Perform navigation setup and load user data
                 setupNavigation();
                 updateUserInfo();
+                
+                // Determine which dashboard to show based on user type
+                let dashboardId = '';
+                switch(user.type) {
+                    case 'doctor':
+                        dashboardId = 'doctorDashboard';
+                        break;
+                    case 'patient':
+                        dashboardId = 'patientDashboard';
+                        break;
+                    case 'receptionist':
+                        dashboardId = 'receptionistDashboard';
+                        break;
+                    case 'labTechnician':
+                        dashboardId = 'labTechnicianDashboard';
+                        break;
+                    default:
+                        dashboardId = 'doctorDashboard'; // Fallback to doctor dashboard
+                }
+                
+                // Navigate to appropriate dashboard
+                if (dashboardId) {
+                    console.log("Auto-navigating to dashboard:", dashboardId);
+                    // Use setTimeout to ensure DOM is ready
+                    setTimeout(() => {
+                        navigateTo(dashboardId);
+                    }, 200);
+                }
                 
                 // Add debug info
                 console.log("Login check complete - user loaded:", user.name);
