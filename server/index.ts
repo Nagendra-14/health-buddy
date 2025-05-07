@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -47,6 +48,17 @@ app.use((req, res, next) => {
 
     res.status(status).json({ message });
     throw err;
+  });
+
+  // Add a special health-check route that doesn't go through Vite
+  app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  // Health Buddy static assets - ensure these are served by express directly
+  // and not passed through Vite to prevent React from hijacking the page
+  app.get('/user-role-functions.js', (req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'user-role-functions.js'));
   });
 
   // importantly only setup vite in development and after
