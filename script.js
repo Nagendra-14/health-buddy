@@ -2168,6 +2168,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 params.append('patientId', patientId);
             }
             
+            // Add current user ID for debugging
+            if (currentUser && currentUser.id) {
+                params.append('currentUser', currentUser.id);
+            }
+            
             // Add params to URL if any exist
             const paramString = params.toString();
             if (paramString) {
@@ -2176,19 +2181,47 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Fetching prescriptions from URL:', url);
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Server response error:', errorText);
-                throw new Error(`Failed to fetch prescriptions: ${response.status} ${response.statusText}`);
-            }
+            // Add timeout to prevent hanging requests
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
             
-            const data = await response.json();
-            console.log('Fetched prescriptions data:', data);
-            return data;
+            try {
+                const response = await fetch(url, { 
+                    signal: controller.signal,
+                    headers: {
+                        'Cache-Control': 'no-cache', 
+                        'Pragma': 'no-cache'
+                    }
+                });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response error:', errorText);
+                    throw new Error(`Failed to fetch prescriptions: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Fetched prescriptions data successfully:', data.length, 'prescriptions');
+                
+                // Ensure proper data format
+                if (!Array.isArray(data)) {
+                    console.error('Expected array of prescriptions but got:', data);
+                    return [];
+                }
+                
+                return data;
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                if (fetchError.name === 'AbortError') {
+                    console.error('Fetch request timed out');
+                    throw new Error('Request timed out. Server took too long to respond.');
+                }
+                throw fetchError;
+            }
         } catch (error) {
             console.error('Error fetching prescriptions:', error);
-            showToast('Error loading prescriptions. Please try again.', 'error');
+            showToast('Error loading prescriptions: ' + (error.message || 'Unknown error'), 'error');
             return [];
         }
     }
