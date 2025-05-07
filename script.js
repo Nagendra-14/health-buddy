@@ -662,13 +662,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to load doctors for appointment request
     async function loadDoctorsForAppointment() {
         try {
+            console.log('Starting loadDoctorsForAppointment function');
             const response = await fetch('/api/doctors');
             if (!response.ok) {
                 throw new Error('Failed to fetch doctors');
             }
             
             const doctors = await response.json();
+            console.log('Doctors loaded:', doctors);
+            
             const doctorSelect = document.getElementById('appointmentDoctor');
+            if (!doctorSelect) {
+                console.error('Doctor select element not found!');
+                return;
+            }
             
             // Clear existing options except the first one
             while (doctorSelect.options.length > 1) {
@@ -677,13 +684,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add doctor options
             doctors.forEach(doctor => {
+                console.log('Processing doctor:', doctor);
                 const option = document.createElement('option');
                 option.value = doctor.id;
+                
                 // Include specialty information if available
                 if (doctor.specialty && doctor.specialty.trim() !== '') {
                     option.textContent = `${doctor.name} (${doctor.specialty})`;
+                    console.log(`Set option text to ${doctor.name} (${doctor.specialty})`);
                 } else {
                     option.textContent = doctor.name;
+                    console.log(`Set option text to ${doctor.name} - no specialty found`);
                 }
                 doctorSelect.appendChild(option);
             });
@@ -691,17 +702,78 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add event listener to display doctor info when selected
             doctorSelect.addEventListener('change', function() {
                 const selectedDoctorId = this.value;
+                console.log('Doctor selected:', selectedDoctorId);
                 if (!selectedDoctorId) return;
                 
                 const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+                console.log('Selected doctor details:', selectedDoctor);
+                
                 if (selectedDoctor) {
-                    const infoElement = document.getElementById('doctorSpecialtyInfo');
-                    if (infoElement) {
-                        infoElement.textContent = selectedDoctor.specialty || 'General Practitioner';
-                        infoElement.parentElement.style.display = 'block';
+                    // Try to find existing info element
+                    let infoElement = document.getElementById('doctorSpecialtyInfo');
+                    let infoParent = document.querySelector('.doctor-info');
+                    
+                    // Create elements if they don't exist
+                    if (!infoElement || !infoParent) {
+                        console.log('Doctor info elements not found, creating them...');
+                        
+                        // If the parent exists but not the span, just create the span
+                        if (infoParent && !infoElement) {
+                            infoElement = document.createElement('span');
+                            infoElement.id = 'doctorSpecialtyInfo';
+                            infoParent.appendChild(infoElement);
+                        } 
+                        // If neither exists, create both
+                        else if (!infoParent) {
+                            // Find the doctor select element to insert after
+                            const doctorSelectGroup = doctorSelect.closest('.form-group');
+                            
+                            if (doctorSelectGroup) {
+                                // Create parent
+                                infoParent = document.createElement('div');
+                                infoParent.className = 'doctor-info';
+                                infoParent.style.display = 'none';
+                                infoParent.style.marginTop = '5px';
+                                infoParent.style.fontStyle = 'italic';
+                                
+                                // Create label and span
+                                const smallText = document.createElement('small');
+                                smallText.textContent = 'Specialty: ';
+                                
+                                infoElement = document.createElement('span');
+                                infoElement.id = 'doctorSpecialtyInfo';
+                                
+                                // Assemble the elements
+                                smallText.appendChild(infoElement);
+                                infoParent.appendChild(smallText);
+                                
+                                // Add to DOM
+                                doctorSelectGroup.appendChild(infoParent);
+                                console.log('Created and added doctor specialty elements');
+                            } else {
+                                console.error('Could not find doctor select group to append info');
+                                return;
+                            }
+                        }
                     }
+                    
+                    // Use a default if specialty is missing or empty
+                    const specialty = selectedDoctor.specialty && 
+                                      selectedDoctor.specialty.trim() !== '' ? 
+                                      selectedDoctor.specialty : 'General Practitioner';
+                    
+                    infoElement.textContent = specialty;
+                    infoParent.style.display = 'block';
+                    console.log('Updated specialty info to:', specialty);
                 }
             });
+            
+            // Trigger the change event on the first valid option to show specialty by default
+            if (doctorSelect.options.length > 1) {
+                doctorSelect.selectedIndex = 1; // Select the first doctor
+                doctorSelect.dispatchEvent(new Event('change'));
+            }
+            
         } catch (error) {
             console.error('Error loading doctors:', error);
             showToast('Error loading doctors. Please try again.', 'error');
