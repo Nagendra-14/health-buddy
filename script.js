@@ -2542,21 +2542,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load patients for test form
     async function loadPatientsForTest() {
         try {
-            console.log("Loading patients for test form");
+            console.log("Loading patients for test form", currentUser);
             // Get patients from API
             const patients = await fetchPatients();
+            console.log("Fetched patients:", patients);
             
             // Populate select dropdown
             const patientSelect = document.getElementById('testPatient');
+            console.log("Patient select element:", patientSelect);
+            
             if (patientSelect) {
                 patientSelect.innerHTML = '<option value="">Select Patient</option>';
                 
                 // Only show patients assigned to this doctor
                 let filteredPatients = patients;
                 if (currentUser && currentUser.type === 'doctor') {
+                    console.log("Filtering patients for doctor ID:", currentUser.id);
                     filteredPatients = patients.filter(p => p.doctorId === currentUser.id);
+                    console.log("Filtered patients count:", filteredPatients.length);
                     if (filteredPatients.length === 0) {
                         // If no patients are assigned to this doctor, show all patients
+                        console.log("No patients found for this doctor, using all patients instead");
                         filteredPatients = patients;
                     }
                 }
