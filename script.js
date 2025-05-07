@@ -753,20 +753,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function to update time slot options in appointment forms
-    async function updateTimeSlotOptions(selectElement, doctorId, appointmentDate) {
+    async function updateTimeSlotOptions(selectElement, doctorId, appointmentDate, patientId = null) {
         if (!selectElement) return;
         
         try {
             // Show loading indicator
             selectElement.innerHTML = '<option value="">Loading time slots...</option>';
             
-            // Get available slots - include current user ID if available (for patient conflict checking)
-            let patientId = null;
-            if (currentUser && currentUser.type === 'patient') {
+            // If no patientId was provided but current user is a patient, use their ID
+            if (!patientId && currentUser && currentUser.type === 'patient') {
                 patientId = currentUser.id;
             }
             
-            // Get available slots
+            console.log(`Getting available time slots for doctor: ${doctorId}, date: ${appointmentDate}, patient: ${patientId || 'none'}`);
+            
+            // Get available slots checking both doctor and patient conflicts
             const availableSlots = await getAvailableTimeSlots(doctorId, appointmentDate, patientId);
             
             // Clear and populate select element
@@ -779,12 +780,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectElement.appendChild(option);
             });
             
-            // If no available slots, show message
+            // If no available slots, show message and notification
             if (availableSlots.length === 0) {
                 const option = document.createElement('option');
                 option.value = "";
                 option.textContent = "No available slots for this date";
                 selectElement.appendChild(option);
+                
+                // Show user-friendly toast notification about why there are no slots
+                if (patientId) {
+                    showToast('No available time slots on this date. Either the doctor is fully booked or you have conflicting appointments.', 'info');
+                } else {
+                    showToast('No available time slots for this date. Please select another date.', 'info');
+                }
             }
         } catch (error) {
             console.error('Error updating time slots:', error);
@@ -3050,12 +3058,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load patients for the select dropdown
                 loadPatientsForAppointment();
                 
-                // Add event listeners to update time slots when date changes
-                dateInput.addEventListener('change', function() {
-                    // Use current user (doctor) ID to check their availability
+                // Function to update time slots based on both doctor and selected patient
+                function updateAvailableTimeSlots() {
                     const doctorId = currentUser.id;
-                    updateTimeSlotOptions(timeSelect, doctorId, this.value);
-                });
+                    const selectedDate = dateInput.value;
+                    const selectedPatientId = patientSelect.value || null;
+                    
+                    // Update time slots with both doctor and patient constraints
+                    if (doctorId && selectedDate) {
+                        updateTimeSlotOptions(timeSelect, doctorId, selectedDate, selectedPatientId);
+                    }
+                }
+                
+                // Add event listeners to update time slots when date changes
+                dateInput.addEventListener('change', updateAvailableTimeSlots);
+                
+                // Add event listeners to update time slots when patient changes
+                patientSelect.addEventListener('change', updateAvailableTimeSlots);
                 
                 // Initialize time slots for today
                 if (currentUser && currentUser.id) {
