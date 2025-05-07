@@ -2085,8 +2085,13 @@ document.addEventListener('DOMContentLoaded', function() {
             todaysAppointments.forEach(app => {
                 const tr = document.createElement('tr');
                 tr.classList.add('clickable-row');
+                // Add warning icon for conflicting appointments
+                const conflictWarning = app.hasConflict ? 
+                    `<i class="fas fa-exclamation-triangle text-warning" title="This appointment conflicts with ${app.conflictCount-1} other appointment(s)"></i> ` : 
+                    '';
+                    
                 tr.innerHTML = `
-                    <td>${app.patientName}</td>
+                    <td>${conflictWarning}${app.patientName}</td>
                     <td>${app.time}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                 `;

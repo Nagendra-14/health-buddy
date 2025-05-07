@@ -431,49 +431,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const date = req.query.date as string;
       
       // Create query based on filters
+      // Get the appointments based on filters
+      let result;
       if (doctorId && date) {
         // Filter by both doctor and date
-        const result = await db.query.appointments.findMany({
+        result = await db.query.appointments.findMany({
           where: and(
             eq(appointments.doctorId, doctorId),
             eq(appointments.date, date)
           )
         });
-        return res.json(result);
       } else if (doctorId) {
         // Filter by doctor only
-        const result = await db.query.appointments.findMany({
+        result = await db.query.appointments.findMany({
           where: eq(appointments.doctorId, doctorId)
         });
-        return res.json(result);
       } else if (patientId && date) {
         // Filter by both patient and date
-        const result = await db.query.appointments.findMany({
+        result = await db.query.appointments.findMany({
           where: and(
             eq(appointments.patientId, patientId),
             eq(appointments.date, date)
           )
         });
-        return res.json(result);
       } else if (patientId) {
         // Filter by patient only
-        const result = await db.query.appointments.findMany({
+        result = await db.query.appointments.findMany({
           where: eq(appointments.patientId, patientId)
         });
-        return res.json(result);
-      } else if (date) {
-        // Filter by date only
-        const result = await db.query.appointments.findMany({
-          where: eq(appointments.date, date)
-        });
-        return res.json(result);
       } else {
-        // Return all appointments if no filter is provided
-        const result = await db.query.appointments.findMany();
-        return res.json(result);
+        // Get all appointments
+        result = await db.query.appointments.findMany();
       }
       
-      // This section is now handled by the code above
+      // Add flags for conflicting appointments (existing data)
+      const appointmentsByDateAndTime: { [key: string]: { [key: string]: { [key: string]: any[] } } } = {};
+      
+      // Group appointments by date, doctor, and time
+      result.forEach(app => {
+        if (!appointmentsByDateAndTime[app.date]) {
+          appointmentsByDateAndTime[app.date] = {};
+        }
+        
+        if (!appointmentsByDateAndTime[app.date][app.doctorId]) {
+          appointmentsByDateAndTime[app.date][app.doctorId] = {};
+        }
+        
+        if (!appointmentsByDateAndTime[app.date][app.doctorId][app.time]) {
+          appointmentsByDateAndTime[app.date][app.doctorId][app.time] = [];
+        }
+        
+        appointmentsByDateAndTime[app.date][app.doctorId][app.time].push(app);
+      });
+      
+      // Add warning flag for conflicting appointments
+      const resultWithWarnings = result.map(app => {
+        const conflictCount = appointmentsByDateAndTime[app.date]?.[app.doctorId]?.[app.time]?.length || 0;
+        
+        // If more than one appointment exists at this time slot, it's conflicting
+        if (conflictCount > 1) {
+          return { 
+            ...app, 
+            hasConflict: true,
+            conflictCount: conflictCount
+          };
+        }
+        
+        return app;
+      });
+      
+      return res.json(resultWithWarnings);
     } catch (error) {
       console.error('Error getting appointments:', error);
       res.status(500).json({ message: 'Internal server error' });
