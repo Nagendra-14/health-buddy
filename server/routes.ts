@@ -495,7 +495,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/prescriptions', async (req, res) => {
     try {
       console.log('Prescription data received:', req.body);
-      const { patientId, patientName, doctorId, doctorName, diagnosis, medications, instructions } = req.body;
+      let { patientId, patientName, doctorId, doctorName, diagnosis, medications, instructions, details } = req.body;
+      
+      // Ensure diagnosis is not null (required field)
+      if (!diagnosis) {
+        if (details) {
+          diagnosis = details; // Use details as fallback
+        } else {
+          diagnosis = "General prescription"; // Default value
+        }
+      }
       
       // Find the highest existing ID
       const existingPrescriptions = await db.query.prescriptions.findMany();
