@@ -2202,7 +2202,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Setup doctor appointment form functionality
-
+    document.addEventListener('DOMContentLoaded', function() {
+        const newDoctorAppointmentBtn = document.getElementById('newDoctorAppointmentBtn');
+        if (newDoctorAppointmentBtn) {
+            newDoctorAppointmentBtn.addEventListener('click', function() {
+                showToast('Appointment scheduling is currently under development.', 'info');
+            });
+        }
+    });
     
     // ===============================================================
     // UTILITY FUNCTIONS
