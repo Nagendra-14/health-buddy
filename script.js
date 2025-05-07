@@ -1343,7 +1343,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Links that are shown to both doctors and patients
         const sharedLinks = [
-            { id: 'doctorDashboard', id2: 'patientDashboard', label: 'Dashboard', icon: 'fa-home' }
+            { 
+                id: 'doctorDashboard', 
+                id2: 'patientDashboard', 
+                id3: 'receptionistDashboard', 
+                id4: 'labTechnicianDashboard', 
+                label: 'Dashboard', 
+                icon: 'fa-home' 
+            }
         ];
         
         if (currentUser.type === 'doctor') {
@@ -1414,6 +1421,72 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Load patient data
             loadPatientData();
+        } else if (currentUser.type === 'receptionist') {
+            console.log("Setting up receptionist navigation links");
+            // Receptionist-specific navigation links
+            const receptionistLinks = [
+                { id: 'receptionistAppointments', label: 'Appointments', icon: 'fa-calendar-check' },
+                { id: 'receptionistPatients', label: 'Patients', icon: 'fa-users' },
+                { id: 'receptionistDoctors', label: 'Doctors', icon: 'fa-user-md' }
+            ];
+            
+            // Add links to navigation
+            const links = sharedLinks.map(link => ({ ...link, id: link.id3 })).concat(receptionistLinks);
+            links.forEach(link => {
+                const id = link.id;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" data-page="${id}" class="nav-link">
+                        <i class="fas ${link.icon}"></i>
+                        <span>${link.label}</span>
+                    </a>
+                `;
+                navLinksContainer.appendChild(li);
+                
+                // Add click event listener
+                li.querySelector('a').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateTo(id);
+                });
+            });
+            
+            console.log("Receptionist navigation links added:", links.length);
+            
+            // Load receptionist data
+            loadReceptionistData();
+        } else if (currentUser.type === 'labTechnician') {
+            console.log("Setting up lab technician navigation links");
+            // Lab technician-specific navigation links
+            const labTechnicianLinks = [
+                { id: 'labTests', label: 'Manage Tests', icon: 'fa-vial' },
+                { id: 'labReports', label: 'Test Reports', icon: 'fa-file-medical-alt' },
+                { id: 'labPatients', label: 'Patients', icon: 'fa-user-injured' }
+            ];
+            
+            // Add links to navigation
+            const links = sharedLinks.map(link => ({ ...link, id: link.id4 })).concat(labTechnicianLinks);
+            links.forEach(link => {
+                const id = link.id;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" data-page="${id}" class="nav-link">
+                        <i class="fas ${link.icon}"></i>
+                        <span>${link.label}</span>
+                    </a>
+                `;
+                navLinksContainer.appendChild(li);
+                
+                // Add click event listener
+                li.querySelector('a').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateTo(id);
+                });
+            });
+            
+            console.log("Lab technician navigation links added:", links.length);
+            
+            // Load lab technician data
+            loadLabTechnicianData();
         }
         
         // Finally, update the user info in the sidebar
@@ -1597,15 +1670,30 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePageTitle(pageId) {
         const pageTitle = document.getElementById('pageTitle');
         const titles = {
+            // Doctor pages
             doctorDashboard: 'Doctor Dashboard',
-            patientDashboard: 'Patient Dashboard',
             doctorAppointments: 'Appointments',
-            patientAppointments: 'My Appointments',
             startTests: 'Start Tests',
             prescriptions: 'Prescriptions',
-            patientPrescriptions: 'My Prescriptions',
             doctorReports: 'Patient Reports',
-            patientReports: 'My Reports'
+            
+            // Patient pages
+            patientDashboard: 'Patient Dashboard',
+            patientAppointments: 'My Appointments',
+            patientPrescriptions: 'My Prescriptions',
+            patientReports: 'My Reports',
+            
+            // Receptionist pages
+            receptionistDashboard: 'Receptionist Dashboard',
+            receptionistAppointments: 'Manage Appointments',
+            receptionistPatients: 'Manage Patients',
+            receptionistDoctors: 'Manage Doctors',
+            
+            // Lab Technician pages
+            labTechnicianDashboard: 'Lab Technician Dashboard',
+            labTests: 'Manage Tests',
+            labReports: 'Test Reports',
+            labPatients: 'Patient Tests'
         };
         
         pageTitle.textContent = titles[pageId] || 'Dashboard';
@@ -1626,7 +1714,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUserInfo() {
         if (currentUser) {
             document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userRole').textContent = currentUser.type === 'doctor' ? 'Doctor' : 'Patient';
+            
+            // Set the proper role text
+            let roleText = 'User';
+            switch(currentUser.type) {
+                case 'doctor':
+                    roleText = 'Doctor';
+                    break;
+                case 'patient':
+                    roleText = 'Patient';
+                    break;
+                case 'receptionist':
+                    roleText = 'Receptionist';
+                    break;
+                case 'labTechnician':
+                    roleText = 'Lab Technician';
+                    break;
+            }
+            document.getElementById('userRole').textContent = roleText;
         }
     }
     
