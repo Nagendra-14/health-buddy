@@ -770,6 +770,497 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Receptionist Dashboard Page -->
+                <div id="receptionistDashboard" class="content-page">
+                    <div class="dashboard-welcome">
+                        <h2 class="welcome-message">Welcome, <span id="receptionistName"></span>!</h2>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Today's Appointments</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Pending Appointments</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Total Patients</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row-cards">
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <h3>Today's Appointments</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Doctor</th>
+                                                <th>Time</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="receptionistAppointmentsList">
+                                            <tr>
+                                                <td colspan="4" class="text-center">Loading appointments...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="#" data-page="receptionistAppointments" class="btn btn-primary">Manage All Appointments</a>
+                            </div>
+                        </div>
+                        
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <h3>Quick Actions</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions">
+                                    <a href="#" data-page="receptionistAppointments" class="quick-action-btn">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>New Appointment</span>
+                                    </a>
+                                    <a href="#" data-page="receptionistPatients" class="quick-action-btn">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Register Patient</span>
+                                    </a>
+                                    <a href="#" class="quick-action-btn" id="viewDoctorsBtn">
+                                        <i class="fas fa-user-md"></i>
+                                        <span>Doctor Schedule</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Receptionist Appointments Page -->
+                <div id="receptionistAppointments" class="content-page">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3>Manage Appointments</h3>
+                            <button id="createAppointmentBtn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Appointment
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="appDateFilter">Date</label>
+                                    <input type="date" id="appDateFilter" class="form-control">
+                                </div>
+                                <div class="filter-item">
+                                    <label for="appDoctorFilter">Doctor</label>
+                                    <select id="appDoctorFilter" class="form-control">
+                                        <option value="">All Doctors</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="appStatusFilter">Status</label>
+                                    <select id="appStatusFilter" class="form-control">
+                                        <option value="">All Statuses</option>
+                                        <option value="Confirmed">Confirmed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <button id="applyAppFilters" class="btn btn-primary">Apply Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive mt-3">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Doctor</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="receptionistAppointmentsTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">Loading appointments...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Receptionist Patients Page -->
+                <div id="receptionistPatients" class="content-page">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3>Manage Patients</h3>
+                            <button id="registerPatientBtn" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Register New Patient
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="patientSearchInput">Search</label>
+                                    <input type="text" id="patientSearchInput" class="form-control" placeholder="Search by name or email">
+                                </div>
+                                <div class="filter-item">
+                                    <label for="patientDoctorFilter">Doctor</label>
+                                    <select id="patientDoctorFilter" class="form-control">
+                                        <option value="">All Doctors</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <button id="applyPatientFilters" class="btn btn-primary">Search</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive mt-3">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Assigned Doctor</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="receptionistPatientsTable">
+                                        <tr>
+                                            <td colspan="5" class="text-center">Loading patients...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Receptionist Doctors Page -->
+                <div id="receptionistDoctors" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Doctors Schedule</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="doctorScheduleDate">Date</label>
+                                    <input type="date" id="doctorScheduleDate" class="form-control">
+                                </div>
+                                <div class="filter-item">
+                                    <label for="doctorScheduleFilter">Doctor</label>
+                                    <select id="doctorScheduleFilter" class="form-control">
+                                        <option value="">All Doctors</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <button id="viewDoctorSchedule" class="btn btn-primary">View Schedule</button>
+                                </div>
+                            </div>
+                            
+                            <div class="schedule-container mt-4">
+                                <div id="doctorScheduleGrid">
+                                    <p class="text-center">Select a date and doctor to view their schedule.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Manage Doctors</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Specialty</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="receptionistDoctorsTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">Loading doctors...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Technician Dashboard Page -->
+                <div id="labTechnicianDashboard" class="content-page">
+                    <div class="dashboard-welcome">
+                        <h2 class="welcome-message">Welcome, <span id="labTechnicianName"></span>!</h2>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-flask"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Pending Tests</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Completed Tests</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Total Patients</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row-cards">
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <h3>Pending Tests</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Test</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="labTechnicianTestsList">
+                                            <tr>
+                                                <td colspan="4" class="text-center">Loading tests...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="#" data-page="labTests" class="btn btn-primary">View All Tests</a>
+                            </div>
+                        </div>
+                        
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <h3>Quick Actions</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions">
+                                    <a href="#" data-page="labTests" class="quick-action-btn">
+                                        <i class="fas fa-vial"></i>
+                                        <span>Update Test Status</span>
+                                    </a>
+                                    <a href="#" data-page="labReports" class="quick-action-btn">
+                                        <i class="fas fa-file-medical-alt"></i>
+                                        <span>Create Test Report</span>
+                                    </a>
+                                    <a href="#" data-page="labPatients" class="quick-action-btn">
+                                        <i class="fas fa-user-injured"></i>
+                                        <span>Patient History</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Tests Page -->
+                <div id="labTests" class="content-page">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3>Manage Tests</h3>
+                            <button id="updateTestStatusBtn" class="btn btn-primary">
+                                <i class="fas fa-check-circle"></i> Update Test Status
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="testDateFilter">Date</label>
+                                    <input type="date" id="testDateFilter" class="form-control">
+                                </div>
+                                <div class="filter-item">
+                                    <label for="testTypeFilter">Test Type</label>
+                                    <select id="testTypeFilter" class="form-control">
+                                        <option value="">All Tests</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="testStatusFilter">Status</label>
+                                    <select id="testStatusFilter" class="form-control">
+                                        <option value="">All Statuses</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <button id="applyTestFilters" class="btn btn-primary">Apply Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive mt-3">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Test Type</th>
+                                            <th>Date</th>
+                                            <th>Doctor</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="labTestsTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">Loading tests...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Reports Page -->
+                <div id="labReports" class="content-page">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3>Test Reports</h3>
+                            <button id="createReportBtn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create New Report
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="reportPatientFilter">Patient</label>
+                                    <select id="reportPatientFilter" class="form-control">
+                                        <option value="">All Patients</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="reportCategoryFilter">Category</label>
+                                    <select id="reportCategoryFilter" class="form-control">
+                                        <option value="">All Categories</option>
+                                        <option value="Lab Test">Lab Test</option>
+                                        <option value="Imaging">Imaging</option>
+                                        <option value="Pathology">Pathology</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <button id="applyReportFilters" class="btn btn-primary">Apply Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div class="reports-grid mt-4" id="labReportsGrid">
+                                <p class="text-center">Loading reports...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Patients Page -->
+                <div id="labPatients" class="content-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Patient Test History</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="labPatientSearch">Search Patient</label>
+                                    <input type="text" id="labPatientSearch" class="form-control" placeholder="Search by name or ID">
+                                </div>
+                                <div class="filter-item">
+                                    <button id="searchLabPatient" class="btn btn-primary">Search</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive mt-3">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Doctor</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="labPatientsTable">
+                                        <tr>
+                                            <td colspan="5" class="text-center">Search for a patient to view their history</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4" id="patientTestHistoryContainer" style="display: none;">
+                        <div class="card-header">
+                            <h3>Test History for <span id="selectedPatientName"></span></h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Test Type</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Results</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="patientTestHistoryTable">
+                                        <tr>
+                                            <td colspan="5" class="text-center">No test history found</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -928,12 +1419,28 @@
                                         <li><a href="#" data-page="prescriptions" class="nav-link"><i class="fas fa-pills"></i><span>Prescriptions</span></a></li>
                                         <li><a href="#" data-page="doctorReports" class="nav-link"><i class="fas fa-file-medical"></i><span>Reports</span></a></li>
                                     `;
-                                } else {
+                                } else if (user.type === 'patient') {
                                     // Patient links
                                     navLinks.innerHTML = `
                                         <li><a href="#" data-page="patientDashboard" class="nav-link active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
                                         <li><a href="#" data-page="patientAppointments" class="nav-link"><i class="fas fa-calendar-check"></i><span>Appointments</span></a></li>
                                         <li><a href="#" data-page="patientReports" class="nav-link"><i class="fas fa-file-medical"></i><span>Reports</span></a></li>
+                                    `;
+                                } else if (user.type === 'receptionist') {
+                                    // Receptionist links
+                                    navLinks.innerHTML = `
+                                        <li><a href="#" data-page="receptionistDashboard" class="nav-link active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                                        <li><a href="#" data-page="receptionistAppointments" class="nav-link"><i class="fas fa-calendar-check"></i><span>Appointments</span></a></li>
+                                        <li><a href="#" data-page="receptionistPatients" class="nav-link"><i class="fas fa-users"></i><span>Patients</span></a></li>
+                                        <li><a href="#" data-page="receptionistDoctors" class="nav-link"><i class="fas fa-user-md"></i><span>Doctors</span></a></li>
+                                    `;
+                                } else if (user.type === 'labTechnician') {
+                                    // Lab Technician links
+                                    navLinks.innerHTML = `
+                                        <li><a href="#" data-page="labTechnicianDashboard" class="nav-link active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                                        <li><a href="#" data-page="labTests" class="nav-link"><i class="fas fa-vial"></i><span>Manage Tests</span></a></li>
+                                        <li><a href="#" data-page="labReports" class="nav-link"><i class="fas fa-file-medical-alt"></i><span>Test Reports</span></a></li>
+                                        <li><a href="#" data-page="labPatients" class="nav-link"><i class="fas fa-user-injured"></i><span>Patients</span></a></li>
                                     `;
                                 }
                                 
@@ -959,14 +1466,30 @@
                                         const pageTitle = document.getElementById('pageTitle');
                                         if (pageTitle) {
                                             const titles = {
+                                                // Doctor pages
                                                 doctorDashboard: 'Doctor Dashboard',
-                                                patientDashboard: 'Patient Dashboard',
                                                 doctorAppointments: 'Appointments',
-                                                patientAppointments: 'My Appointments',
                                                 startTests: 'Start Tests',
                                                 prescriptions: 'Prescriptions',
                                                 doctorReports: 'Patient Reports',
-                                                patientReports: 'My Reports'
+                                                
+                                                // Patient pages
+                                                patientDashboard: 'Patient Dashboard',
+                                                patientAppointments: 'My Appointments',
+                                                patientPrescriptions: 'My Prescriptions',
+                                                patientReports: 'My Reports',
+                                                
+                                                // Receptionist pages
+                                                receptionistDashboard: 'Receptionist Dashboard',
+                                                receptionistAppointments: 'Manage Appointments',
+                                                receptionistPatients: 'Manage Patients',
+                                                receptionistDoctors: 'Manage Doctors',
+                                                
+                                                // Lab Technician pages
+                                                labTechnicianDashboard: 'Lab Technician Dashboard',
+                                                labTests: 'Manage Tests',
+                                                labReports: 'Test Reports',
+                                                labPatients: 'Patient Tests'
                                             };
                                             pageTitle.textContent = titles[pageId] || 'Dashboard';
                                         }

@@ -1,3 +1,34 @@
+// Helper functions
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    
+    const toastMessage = toast.querySelector('.toast-message');
+    if (!toastMessage) return;
+    
+    // Set message and type
+    toastMessage.textContent = message;
+    toast.className = 'toast';
+    toast.classList.add(type);
+    toast.classList.add('show');
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Format date into a readable string
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
 // Receptionist data loading function
 async function loadReceptionistData() {
     try {
