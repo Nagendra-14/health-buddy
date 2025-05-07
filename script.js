@@ -126,7 +126,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to save prescription');
             }
             
-            return await response.json();
+            const savedPrescription = await response.json();
+            
+            // After saving a prescription, reload the prescriptions list
+            // This ensures the new prescription shows up in the patient dashboard
+            await loadPrescriptions();
+            
+            return savedPrescription;
         } catch (error) {
             console.error('Error saving prescription:', error);
             showToast('Error saving prescription. Please try again.', 'error');
@@ -1621,6 +1627,119 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // For doctor reports, add the patient search dropdown
+            if (containerId === 'doctorReportsGrid' && currentUser && currentUser.type === 'doctor') {
+                // Check if the search container already exists
+                let searchContainer = document.getElementById('reportsSearchContainer');
+                if (!searchContainer) {
+                    // Create search elements
+                    searchContainer = document.createElement('div');
+                    searchContainer.id = 'reportsSearchContainer';
+                    searchContainer.className = 'search-container mb-3';
+                    
+                    // Fetch patients for dropdown
+                    const patients = await fetchPatients();
+                    
+                    // Create patient select dropdown
+                    searchContainer.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="patientReportFilter">Filter by Patient</label>
+                                <select id="patientReportFilter" class="form-control">
+                                    <option value="">All Patients</option>
+                                    ${patients.map(patient => `
+                                        <option value="${patient.id}">${patient.name}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="categoryReportFilter">Filter by Category</label>
+                                <select id="categoryReportFilter" class="form-control">
+                                    <option value="">All Categories</option>
+                                    <option value="blood">Blood Tests</option>
+                                    <option value="urine">Urine Tests</option>
+                                    <option value="imaging">Imaging</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insert search container before the reports container
+                    reportsContainer.parentNode.insertBefore(searchContainer, reportsContainer);
+                    
+                    // Add event listeners for filtering
+                    const patientFilter = document.getElementById('patientReportFilter');
+                    const categoryFilter = document.getElementById('categoryReportFilter');
+                    
+                    patientFilter.addEventListener('change', async function() {
+                        const patientId = this.value;
+                        const category = categoryFilter.value;
+                        
+                        // Get filtered reports
+                        let filteredData;
+                        if (patientId) {
+                            // Filter by patient
+                            filteredData = await fetchReportsData(null, patientId);
+                        } else {
+                            // Get all reports for doctor
+                            filteredData = await fetchReportsData(currentUser.id, null);
+                        }
+                        
+                        // Apply category filter if selected
+                        if (category) {
+                            filteredData = filteredData.filter(report => {
+                                if (category === 'blood' && report.category.toLowerCase().includes('blood')) return true;
+                                if (category === 'urine' && report.category.toLowerCase().includes('urine')) return true;
+                                if (category === 'imaging' && (report.category.toLowerCase().includes('imaging') || report.category.toLowerCase().includes('scan') || report.category.toLowerCase().includes('ray'))) return true;
+                                if (category === 'other' && !report.category.toLowerCase().includes('blood') && !report.category.toLowerCase().includes('urine') && !report.category.toLowerCase().includes('imaging') && !report.category.toLowerCase().includes('scan') && !report.category.toLowerCase().includes('ray')) return true;
+                                return false;
+                            });
+                        }
+                        
+                        // Reload the reports container with filtered data
+                        loadReports(containerId, filteredData);
+                    });
+                    
+                    categoryFilter.addEventListener('change', function() {
+                        // Trigger the patient filter change event to apply both filters
+                        patientFilter.dispatchEvent(new Event('change'));
+                    });
+                }
+            }
+            
+            // Update doctor dashboard recent reports
+            if (containerId === 'doctorReportsGrid' && currentUser && currentUser.type === 'doctor') {
+                const dashboardReportsList = document.getElementById('doctorRecentReportsList');
+                if (dashboardReportsList) {
+                    dashboardReportsList.innerHTML = '';
+                    
+                    if (reportsData && reportsData.length > 0) {
+                        // Show most recent reports for dashboard
+                        const recentReports = [...reportsData]
+                            .sort((a, b) => new Date(b.date) - new Date(a.date))
+                            .slice(0, 3);
+                        
+                        recentReports.forEach(report => {
+                            const tr = document.createElement('tr');
+                            tr.classList.add('clickable-row');
+                            tr.innerHTML = `
+                                <td>${report.patientName}</td>
+                                <td>${report.title}</td>
+                                <td>${formatDate(report.date)}</td>
+                            `;
+                            // Make row clickable to show report details
+                            tr.addEventListener('click', () => {
+                                showReportDetails(report);
+                            });
+                            dashboardReportsList.appendChild(tr);
+                        });
+                    } else {
+                        dashboardReportsList.innerHTML = '<tr><td colspan="3" class="text-center">No recent reports</td></tr>';
+                    }
+                }
+            }
+            
             if (reportsData && reportsData.length > 0) {
                 // Sort by date, most recent first
                 const sortedReports = [...reportsData].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1748,11 +1867,158 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Show report details (could be implemented with a modal in a real app)
+    // Show report details in a modal
     function showReportDetails(report) {
-        // For this demo, we'll just show a notification
-        // In a real app, this would open a modal with all details
-        showToast(`Viewing report: ${report.name}`, 'info');
+        // Create or get existing modal
+        let modal = document.getElementById('reportDetailsModal');
+        
+        if (!modal) {
+            // Create the modal if it doesn't exist
+            modal = document.createElement('div');
+            modal.id = 'reportDetailsModal';
+            modal.className = 'modal';
+            
+            modal.innerHTML = `
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Report Details</h2>
+                        <span class="close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Content will be filled dynamically -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="printReportBtn">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listeners to close modal
+            const closeBtn = modal.querySelector('.close');
+            const closeModalBtn = modal.querySelector('.close-modal-btn');
+            
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            closeModalBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            // Print report functionality
+            const printBtn = modal.querySelector('#printReportBtn');
+            printBtn.addEventListener('click', () => {
+                showToast("Printing report...");
+                window.print();
+            });
+            
+            // Close when clicking outside the modal
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update modal content with report details
+        const modalTitle = modal.querySelector('.modal-title');
+        const modalBody = modal.querySelector('.modal-body');
+        
+        // Set the title
+        modalTitle.textContent = report.title || report.name || 'Report Details';
+        
+        // Determine status class
+        let statusClass = '';
+        let statusText = report.status || 'Pending';
+        
+        if (statusText.toLowerCase() === 'normal') {
+            statusClass = 'report-result-normal';
+        } else if (statusText.toLowerCase() === 'borderline') {
+            statusClass = 'report-result-borderline';
+        } else if (statusText.toLowerCase() === 'abnormal') {
+            statusClass = 'report-result-abnormal';
+        } else {
+            statusClass = 'report-result-pending';
+        }
+        
+        // Fill the modal body with report details
+        modalBody.innerHTML = `
+            <div class="report-details">
+                <div class="report-info-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Patient:</strong> ${report.patientName}</p>
+                            <p><strong>Date:</strong> ${formatDate(report.date)}</p>
+                            <p><strong>Category:</strong> ${report.category}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Ordered By:</strong> ${report.orderedBy}</p>
+                            <p><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></p>
+                            <p><strong>Report ID:</strong> ${report.id}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-content">
+                    <h4>Results</h4>
+                    <div class="report-results">
+                        ${report.content ? report.content : 
+                            `<div class="report-placeholder">
+                                <h3>Report Summary</h3>
+                                <p>${report.summary || 'This is a summary of the ' + report.category + ' report for ' + report.patientName}</p>
+                                <div class="result-table">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Test</th>
+                                                <th>Result</th>
+                                                <th>Reference Range</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Test 1</td>
+                                                <td>Value 1</td>
+                                                <td>Normal Range 1</td>
+                                                <td><span class="report-result-normal">Normal</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Test 2</td>
+                                                <td>Value 2</td>
+                                                <td>Normal Range 2</td>
+                                                <td><span class="report-result-borderline">Borderline</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Test 3</td>
+                                                <td>Value 3</td>
+                                                <td>Normal Range 3</td>
+                                                <td><span class="report-result-normal">Normal</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>`
+                        }
+                    </div>
+                    
+                    ${report.doctorNotes ? 
+                        `<div class="doctor-notes">
+                            <h4>Doctor's Notes</h4>
+                            <p>${report.doctorNotes}</p>
+                        </div>` : ''
+                    }
+                </div>
+            </div>
+        `;
+        
+        // Show the modal
+        modal.style.display = 'block';
     }
     
     // ===============================================================
