@@ -561,8 +561,7 @@ nav a i {
     padding: var(--spacing-lg);
     transition: all var(--transition);
     width: calc(100% - 260px);
-    position: absolute;
-    right: 0;
+    position: relative;
 }
 
 .header {
@@ -1191,62 +1190,78 @@ body.mobile-device .status-badge {
     transform: none !important;
 }
 
-/* Dynamic Layout Classes */
+/* Layout Classes - We're rebuilding these from scratch */
+
+/* Default sidebar and content sizing */
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: all 0.3s;
+}
+
+.main-content {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    transition: all 0.3s;
+}
+
+/* Compact layout */
 body.layout-compact .sidebar {
-    width: 80px !important;
-    min-width: 80px !important;
-    max-width: 80px !important;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+body.layout-compact .main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
 }
 
 body.layout-compact .logo-text,
 body.layout-compact .user-details,
-body.layout-compact .nav-link span,
+body.layout-compact .nav-link span {
+    display: none;
+}
+
 body.layout-compact .layout-controls {
-    display: none !important;
+    justify-content: center;
+    padding: 0;
 }
 
 body.layout-compact .avatar {
-    margin-right: 0 !important;
+    margin-right: 0;
 }
 
-body.layout-compact .user-info,
+body.layout-compact .user-info {
+    justify-content: center;
+}
+
 body.layout-compact nav a {
-    justify-content: center !important;
-    padding: var(--spacing-md) !important;
+    justify-content: center;
+    padding: var(--spacing-md);
 }
 
 body.layout-compact nav a i {
-    margin-right: 0 !important;
-    font-size: 1.5rem !important;
-}
-
-body.layout-compact .main-content {
-    margin-left: 80px !important;
-    width: calc(100% - 80px) !important;
-}
-
-/* Default layout */
-body:not(.layout-compact):not(.layout-expanded) .sidebar {
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
-}
-
-body:not(.layout-compact):not(.layout-expanded) .main-content {
-    margin-left: 260px !important;
-    width: calc(100% - 260px) !important;
+    margin-right: 0;
+    font-size: 1.5rem;
 }
 
 /* Expanded layout */
 body.layout-expanded .sidebar {
-    width: 280px !important;
-    min-width: 280px !important;
-    max-width: 280px !important;
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
 }
 
 body.layout-expanded .main-content {
-    margin-left: 280px !important;
-    width: calc(100% - 280px) !important;
+    margin-left: 280px;
+    width: calc(100% - 280px);
 }
 
 @media (max-width: 768px) {
