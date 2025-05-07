@@ -647,8 +647,41 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('appointmentDate').min = today;
             document.getElementById('appointmentDate').value = today;
             
-            // Set default time
-            document.getElementById('appointmentTime').value = '09:00';
+            // Configure time input for 30-minute slots
+            const timeInput = document.getElementById('appointmentTime');
+            if (timeInput) {
+                // Add an event listener to enforce 30-minute slots
+                timeInput.addEventListener('change', function() {
+                    if (this.value) {
+                        // Extract hours and minutes
+                        const [hours, minutes] = this.value.split(':').map(Number);
+                        
+                        // Round to nearest 30-minute slot
+                        const roundedMinutes = minutes < 30 ? '00' : '30';
+                        const formattedHours = hours.toString().padStart(2, '0');
+                        
+                        // Set the standardized time
+                        this.value = `${formattedHours}:${roundedMinutes}`;
+                    }
+                });
+                
+                // Set default time to current hour, rounded to next 30-minute slot
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                let defaultHour = currentHour;
+                let defaultMinute = currentMinute < 30 ? '30' : '00';
+                
+                // If minutes > 30, increment to next hour
+                if (currentMinute >= 30) {
+                    defaultHour = (currentHour + 1) % 24;
+                }
+                
+                timeInput.value = `${defaultHour.toString().padStart(2, '0')}:${defaultMinute}`;
+            }
+            
+            // Show toast notification about time slots
+            showToast('Appointments are scheduled in 30-minute slots (00 or 30 minutes)', 'info');
             
             // Load doctors list
             loadDoctorsForAppointment();
