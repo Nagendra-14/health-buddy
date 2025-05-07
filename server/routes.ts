@@ -678,72 +678,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For debugging
       console.log('Reports API query params:', { doctorId, patientId, category });
       
-      // We'll use an array of conditions and apply the appropriate filters
-      let reportsData;
-      
-      // If no filters, return all reports
-      if (!doctorId && !patientId && (!category || category === 'all')) {
-        reportsData = await db.query.reports.findMany();
-      } 
-      // If only doctorId filter
-      else if (doctorId && !patientId && (!category || category === 'all')) {
-        reportsData = await db.query.reports.findMany({
-          where: eq(reports.doctorId, doctorId)
-        });
-      } 
-      // If only patientId filter
-      else if (!doctorId && patientId && (!category || category === 'all')) {
-        reportsData = await db.query.reports.findMany({
-          where: eq(reports.patientId, patientId)
-        });
-      } 
-      // If only category filter
-      else if (!doctorId && !patientId && category && category !== 'all') {
-        reportsData = await db.query.reports.findMany({
-          where: eq(reports.category, category)
-        });
-      } 
-      // If doctorId and patientId filter
-      else if (doctorId && patientId && (!category || category === 'all')) {
-        reportsData = await db.query.reports.findMany({
-          where: and(
-            eq(reports.doctorId, doctorId),
-            eq(reports.patientId, patientId)
-          )
-        });
-      } 
-      // If doctorId and category filter
-      else if (doctorId && !patientId && category && category !== 'all') {
-        reportsData = await db.query.reports.findMany({
-          where: and(
-            eq(reports.doctorId, doctorId),
-            eq(reports.category, category)
-          )
-        });
-      } 
-      // If patientId and category filter
-      else if (!doctorId && patientId && category && category !== 'all') {
-        reportsData = await db.query.reports.findMany({
-          where: and(
-            eq(reports.patientId, patientId),
-            eq(reports.category, category)
-          )
-        });
-      } 
-      // All three filters
-      else if (doctorId && patientId && category && category !== 'all') {
-        reportsData = await db.query.reports.findMany({
-          where: and(
-            eq(reports.doctorId, doctorId),
-            eq(reports.patientId, patientId),
-            eq(reports.category, category)
-          )
-        });
-      } 
-      // Fallback case
-      else {
-        reportsData = await db.query.reports.findMany();
-      }
+      // Execute query with filters
+      const reportsData = await db.query.reports.findMany({ 
+        where: (reports, { eq, and }) => {
+          const conditions = [];
+          
+          if (doctorId) {
+            conditions.push(eq(reports.doctorId, doctorId));
+          }
+          
+          if (patientId) {
+            conditions.push(eq(reports.patientId, patientId));
+          }
+          
+          if (category && category !== 'all') {
+            conditions.push(eq(reports.category, category));
+          }
+          
+          return conditions.length > 0 ? and(...conditions) : undefined;
+        }
+      });
       
       res.json(reportsData);
     } catch (error) {
