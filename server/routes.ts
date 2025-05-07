@@ -8,7 +8,7 @@ import {
   doctors, patients, pendingDoctors, appointments, 
   tests, prescriptions, reports, userVisits 
 } from '../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 // Get the directory name from the file URL
 const __filename = fileURLToPath(import.meta.url);
@@ -678,29 +678,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For debugging
       console.log('Reports API query params:', { doctorId, patientId, category });
       
-      // Build query differently based on filters
+      // We'll use an array of conditions and apply the appropriate filters
       let reportsData;
       
+      // If no filters, return all reports
       if (!doctorId && !patientId && (!category || category === 'all')) {
-        // No filters, get all reports
         reportsData = await db.query.reports.findMany();
-      } else {
-        // Apply filters
-        let query = db.select().from(reports);
-        
-        if (doctorId) {
-          query = query.where(eq(reports.doctorId, doctorId));
-        }
-        
-        if (patientId) {
-          query = query.where(eq(reports.patientId, patientId));
-        }
-        
-        if (category && category !== 'all') {
-          query = query.where(eq(reports.category, category));
-        }
-        
-        reportsData = await query;
+      } 
+      // If only doctorId filter
+      else if (doctorId && !patientId && (!category || category === 'all')) {
+        reportsData = await db.query.reports.findMany({
+          where: eq(reports.doctorId, doctorId)
+        });
+      } 
+      // If only patientId filter
+      else if (!doctorId && patientId && (!category || category === 'all')) {
+        reportsData = await db.query.reports.findMany({
+          where: eq(reports.patientId, patientId)
+        });
+      } 
+      // If only category filter
+      else if (!doctorId && !patientId && category && category !== 'all') {
+        reportsData = await db.query.reports.findMany({
+          where: eq(reports.category, category)
+        });
+      } 
+      // If doctorId and patientId filter
+      else if (doctorId && patientId && (!category || category === 'all')) {
+        reportsData = await db.query.reports.findMany({
+          where: and(
+            eq(reports.doctorId, doctorId),
+            eq(reports.patientId, patientId)
+          )
+        });
+      } 
+      // If doctorId and category filter
+      else if (doctorId && !patientId && category && category !== 'all') {
+        reportsData = await db.query.reports.findMany({
+          where: and(
+            eq(reports.doctorId, doctorId),
+            eq(reports.category, category)
+          )
+        });
+      } 
+      // If patientId and category filter
+      else if (!doctorId && patientId && category && category !== 'all') {
+        reportsData = await db.query.reports.findMany({
+          where: and(
+            eq(reports.patientId, patientId),
+            eq(reports.category, category)
+          )
+        });
+      } 
+      // All three filters
+      else if (doctorId && patientId && category && category !== 'all') {
+        reportsData = await db.query.reports.findMany({
+          where: and(
+            eq(reports.doctorId, doctorId),
+            eq(reports.patientId, patientId),
+            eq(reports.category, category)
+          )
+        });
+      } 
+      // Fallback case
+      else {
+        reportsData = await db.query.reports.findMany();
       }
       
       res.json(reportsData);
