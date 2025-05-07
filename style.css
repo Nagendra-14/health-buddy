@@ -1190,10 +1190,12 @@ body.mobile-device .status-badge {
     transform: none !important;
 }
 
-/* Layout Classes - We're rebuilding these from scratch */
+/* Layout Classes - Complete Rebuild */
 
 /* Default sidebar and content sizing */
 .sidebar {
+    display: flex;
+    flex-direction: column;
     width: 260px;
     min-width: 260px;
     max-width: 260px;
@@ -1201,14 +1203,16 @@ body.mobile-device .status-badge {
     top: 0;
     left: 0;
     bottom: 0;
-    z-index: 100;
-    transition: all 0.3s;
+    z-index: 1000;
+    background-color: var(--white);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
 }
 
 .main-content {
     margin-left: 260px;
     width: calc(100% - 260px);
-    transition: all 0.3s;
+    transition: all 0.3s ease;
 }
 
 /* Compact layout */

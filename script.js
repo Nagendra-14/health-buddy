@@ -1078,120 +1078,67 @@ document.addEventListener('DOMContentLoaded', function() {
         setupLayoutControls();
     }
     
-    // Handle dynamic layout controls
+    // Handle dynamic layout controls - complete rewrite
     function setupLayoutControls() {
         // Layout control buttons
         const layoutCompact = document.getElementById('layoutCompact');
         const layoutDefault = document.getElementById('layoutDefault');
         const layoutExpanded = document.getElementById('layoutExpanded');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
         
-        if (layoutCompact && layoutDefault && layoutExpanded) {
+        if (layoutCompact && layoutDefault && layoutExpanded && sidebar && mainContent) {
             console.log("Setting up dynamic layout controls");
+            
+            // Helper function to apply layout changes
+            function applyLayout(layout) {
+                // First, remove all layout classes from body
+                document.body.classList.remove('layout-compact', 'layout-expanded');
+                
+                // Remove any inline styles that could be interfering
+                sidebar.removeAttribute('style');
+                mainContent.removeAttribute('style');
+                
+                // Then apply the specific layout class if needed
+                if (layout !== 'default') {
+                    document.body.classList.add(`layout-${layout}`);
+                }
+                
+                // Update button active states
+                document.querySelectorAll('.layout-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to the clicked button
+                document.getElementById(`layout${layout.charAt(0).toUpperCase() + layout.slice(1)}`).classList.add('active');
+                
+                // Save preference
+                localStorage.setItem('healthBuddyLayout', layout);
+                
+                // Force a layout refresh
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
+            }
             
             // Compact layout (minimal sidebar)
             layoutCompact.addEventListener('click', function() {
-                // Remove other layout classes first
-                document.body.classList.remove('layout-expanded');
-                
-                // Force reset any inline styles that might be interfering
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                
-                if (sidebar) {
-                    sidebar.style.width = '';
-                    sidebar.style.minWidth = '';
-                    sidebar.style.maxWidth = '';
-                }
-                
-                if (mainContent) {
-                    mainContent.style.marginLeft = '';
-                    mainContent.style.width = '';
-                }
-                
-                // Add compact layout class
-                document.body.classList.add('layout-compact');
-                
-                // Update active state
-                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Save preference to localStorage
-                localStorage.setItem('healthBuddyLayout', 'compact');
+                applyLayout('compact');
             });
             
             // Default layout
             layoutDefault.addEventListener('click', function() {
-                // Remove all layout classes
-                document.body.classList.remove('layout-compact', 'layout-expanded');
-                
-                // Force reset any inline styles that might be interfering
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                
-                if (sidebar) {
-                    sidebar.style.width = '';
-                    sidebar.style.minWidth = '';
-                    sidebar.style.maxWidth = '';
-                }
-                
-                if (mainContent) {
-                    mainContent.style.marginLeft = '';
-                    mainContent.style.width = '';
-                }
-                
-                // Update active state
-                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Save preference to localStorage
-                localStorage.setItem('healthBuddyLayout', 'default');
+                applyLayout('default');
             });
             
             // Expanded layout (wider content)
             layoutExpanded.addEventListener('click', function() {
-                // Remove other layout classes first
-                document.body.classList.remove('layout-compact');
-                
-                // Force reset any inline styles that might be interfering
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                
-                if (sidebar) {
-                    sidebar.style.width = '';
-                    sidebar.style.minWidth = '';
-                    sidebar.style.maxWidth = '';
-                }
-                
-                if (mainContent) {
-                    mainContent.style.marginLeft = '';
-                    mainContent.style.width = '';
-                }
-                
-                // Add expanded layout class
-                document.body.classList.add('layout-expanded');
-                
-                // Update active state
-                document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Save preference to localStorage
-                localStorage.setItem('healthBuddyLayout', 'expanded');
+                applyLayout('expanded');
             });
             
             // Load user's saved preference
-            const savedLayout = localStorage.getItem('healthBuddyLayout');
-            if (savedLayout) {
-                switch(savedLayout) {
-                    case 'compact':
-                        layoutCompact.click();
-                        break;
-                    case 'expanded':
-                        layoutExpanded.click();
-                        break;
-                    default:
-                        layoutDefault.click();
-                }
-            }
+            const savedLayout = localStorage.getItem('healthBuddyLayout') || 'default';
+            applyLayout(savedLayout);
         }
     }
     
