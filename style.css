@@ -388,7 +388,7 @@ label {
     width: 260px;
     background-color: var(--white);
     box-shadow: var(--shadow);
-    transition: transform var(--transition);
+    transition: all var(--transition);
     z-index: 1000;
     display: flex !important; /* Force display regardless of other styles */
     flex-direction: column;
@@ -965,20 +965,40 @@ body.mobile-device .status-badge {
 
 /* Medium devices (tablets, 577px to 768px) */
 @media (max-width: 768px) {
+    /* Dynamic sidebar for tablets and mobile */
     .sidebar {
-        transform: translateX(-100%) !important; /* Only hide on mobile */
+        transform: translateX(-100%) !important; /* Hidden by default */
         width: 240px;
         z-index: 1100; /* Higher z-index to appear over content */
+        position: fixed; /* Ensure it's floating over content */
     }
     
     .sidebar.active {
-        transform: translateX(0) !important;
+        transform: translateX(0) !important; /* Show when active */
         box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Add shadow when sidebar is open */
     }
     
+    /* Main content takes full width */
     .main-content {
         margin-left: 0;
         width: 100%;
+        transition: all var(--transition);
+    }
+    
+    /* Optional overlay when sidebar is active */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+    }
+    
+    .sidebar.active + .sidebar-overlay {
+        display: block;
     }
     
     .form-row > .form-group {
@@ -1127,10 +1147,11 @@ body.mobile-device .status-badge {
 
 #dashboardPage.active #sidebar {
     display: flex !important;
-    transform: translateX(0) !important;
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 1000 !important;
+    /* Allow dynamic positioning based on screen size */
+    transform: none !important;
 }
 
 #dashboardPage.active .main-content {
