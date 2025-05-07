@@ -494,6 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Save a new prescription
   app.post('/api/prescriptions', async (req, res) => {
     try {
+      console.log('Prescription data received:', req.body);
       const { patientId, patientName, doctorId, doctorName, diagnosis, medications, instructions } = req.body;
       
       // Find the highest existing ID
@@ -502,6 +503,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? parseInt(existingPrescriptions[existingPrescriptions.length - 1].id.substring(3))
         : 0;
       const newId = `PRE${(lastId + 1).toString().padStart(3, '0')}`;
+      
+      // Ensure medications is stored as a JSON string
+      let medicationsJson;
+      if (typeof medications === 'string') {
+        try {
+          // Check if it's already a valid JSON string
+          JSON.parse(medications);
+          medicationsJson = medications;
+        } catch (e) {
+          // If it's not valid JSON, wrap it as a single item array
+          medicationsJson = JSON.stringify([{
+            name: medications,
+            dosage: '',
+            frequency: '',
+            instructions: ''
+          }]);
+        }
+      } else if (Array.isArray(medications)) {
+        medicationsJson = JSON.stringify(medications);
+      } else {
+        medicationsJson = JSON.stringify([]);
+      }
       
       // Create new prescription
       const newPrescription = {
@@ -512,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         doctorName,
         date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         diagnosis,
-        medications: JSON.stringify(medications),
+        medications: medicationsJson,
         instructions
       };
       
@@ -548,11 +571,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Prescription not found' });
       }
       
+      // Ensure medications is stored as a JSON string
+      let medicationsJson;
+      if (typeof medications === 'string') {
+        try {
+          // Check if it's already a valid JSON string
+          JSON.parse(medications);
+          medicationsJson = medications;
+        } catch (e) {
+          // If it's not valid JSON, wrap it as a single item array
+          medicationsJson = JSON.stringify([{
+            name: medications,
+            dosage: '',
+            frequency: '',
+            instructions: ''
+          }]);
+        }
+      } else if (Array.isArray(medications)) {
+        medicationsJson = JSON.stringify(medications);
+      } else {
+        medicationsJson = JSON.stringify([]);
+      }
+      
       // Update prescription
       await db.update(prescriptions)
         .set({
           diagnosis,
-          medications: JSON.stringify(medications),
+          medications: medicationsJson,
           instructions
         })
         .where(eq(prescriptions.id, id));
