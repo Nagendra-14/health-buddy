@@ -1521,6 +1521,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load patient-specific data
     async function loadPatientData() {
         try {
+            console.log('Loading patient data for ID:', currentUser.id);
+            
+            // Make sure prescription page exists
+            if (!document.getElementById('patientPrescriptions')) {
+                console.log('Pre-creating patient prescriptions page during loadPatientData');
+                createPatientPrescriptionsPage();
+            }
+
+            // Fetch patient-specific prescriptions
+            const patientPrescriptions = await fetchPrescriptions(null, currentUser.id);
+            console.log('Found patient prescriptions:', patientPrescriptions);
+            
+            // Add a button to the dashboard to show prescriptions
+            const dashboardCardContainer = document.querySelector('#patientDashboard .dashboard-cards');
+            if (dashboardCardContainer) {
+                // Create a prescription quick access card
+                const prescriptionCard = document.createElement('div');
+                prescriptionCard.className = 'card dashboard-card';
+                prescriptionCard.innerHTML = `
+                    <div class="card-header">
+                        <h3>My Prescriptions</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>${patientPrescriptions.length} prescriptions found.</p>
+                        <button id="viewPrescriptionsBtn" class="btn btn-primary">View All Prescriptions</button>
+                    </div>
+                `;
+                
+                // Add the card to the dashboard
+                dashboardCardContainer.appendChild(prescriptionCard);
+                
+                // Add click event for the button
+                document.getElementById('viewPrescriptionsBtn').addEventListener('click', () => {
+                    console.log('View prescriptions button clicked');
+                    showPatientPrescriptions();
+                });
+            }
+            
             // Fetch patient-specific appointments
             if (currentUser && currentUser.id) {
                 // Fetch fresh appointments
@@ -1675,6 +1713,43 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Display modal
         modal.style.display = 'block';
+    }
+    
+    // Function to directly show patient prescriptions page
+    function showPatientPrescriptions() {
+        console.log('Showing patient prescriptions with direct function');
+        
+        // Make sure the page exists
+        if (!document.getElementById('patientPrescriptions')) {
+            console.log('Creating patient prescriptions page in direct function');
+            createPatientPrescriptionsPage();
+        }
+        
+        // Hide all pages
+        document.querySelectorAll('.content-page').forEach(page => {
+            page.style.display = 'none';
+            page.classList.remove('active');
+        });
+        
+        // Show the prescriptions page
+        const prescriptionsPage = document.getElementById('patientPrescriptions');
+        if (prescriptionsPage) {
+            prescriptionsPage.style.display = 'block';
+            prescriptionsPage.classList.add('active');
+            
+            // Update UI elements
+            updatePageTitle('patientPrescriptions');
+            updateActiveNavLink('patientPrescriptions');
+            
+            // Load the prescription data
+            loadPatientPrescriptions();
+            
+            // Show confirmation toast
+            showToast('Viewing your prescriptions', 'info');
+        } else {
+            console.error('Failed to find or create patient prescriptions page');
+            showToast('Error loading prescriptions page', 'error');
+        }
     }
     
     // Show prescription details in a modal
