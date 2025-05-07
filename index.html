@@ -323,7 +323,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h2>All Appointments</h2>
-                            <button class="btn btn-primary"><i class="fas fa-plus"></i> New Appointment</button>
+                            <button id="newDoctorAppointmentBtn" class="btn btn-primary"><i class="fas fa-plus"></i> New Appointment</button>
                         </div>
                         <div class="filter-row">
                             <div class="search-box">
@@ -602,7 +602,7 @@
         </div>
     </div>
 
-    <!-- Appointment Request Modal -->
+    <!-- Appointment Request Modal (Patient) -->
     <div id="appointmentRequestModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -638,6 +638,58 @@
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Request Appointment</button>
+                        <button type="button" class="btn btn-outline modal-close">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Appointment Modal (Doctor) -->
+    <div id="doctorAppointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Schedule New Appointment</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="doctorAppointmentForm">
+                    <div class="form-group">
+                        <label for="doctorAppointmentPatient">Select Patient</label>
+                        <select id="doctorAppointmentPatient" class="form-control" required>
+                            <option value="">Select a patient</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="doctorAppointmentDate">Date</label>
+                            <input type="date" id="doctorAppointmentDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="doctorAppointmentTime">Time</label>
+                            <input type="time" id="doctorAppointmentTime" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorAppointmentPurpose">Purpose</label>
+                        <input type="text" id="doctorAppointmentPurpose" class="form-control" required placeholder="Reason for this appointment">
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorAppointmentNotes">Additional Notes</label>
+                        <textarea id="doctorAppointmentNotes" class="form-control" rows="3" placeholder="Any additional notes for this appointment"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorAppointmentStatus">Status</label>
+                        <select id="doctorAppointmentStatus" class="form-control" required>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Schedule Appointment</button>
                         <button type="button" class="btn btn-outline modal-close">Cancel</button>
                     </div>
                 </form>
