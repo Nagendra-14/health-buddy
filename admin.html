@@ -583,7 +583,7 @@
                         endpoint = '/api/admin/lab-technicians';
                         break;
                     case 'pending-lab-technicians':
-                        endpoint = '/api/admin/pending-labTechnicians';
+                        endpoint = '/api/admin/pending-lab-technicians';
                         break;
                     case 'visits':
                         endpoint = '/api/admin/visits';
@@ -865,7 +865,7 @@
         // Verify a lab technician
         async function verifyLabTechnician(labTechnicianId) {
             try {
-                const response = await fetch(`/api/admin/verify-labTechnician/${labTechnicianId}`, {
+                const response = await fetch(`/api/admin/verify-lab-technician/${labTechnicianId}`, {
                     method: 'PUT'
                 });
                 

@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get pending lab technicians (admin only)
-  app.get('/api/admin/pending-labTechnicians', async (req, res) => {
+  app.get('/api/admin/pending-lab-technicians', async (req, res) => {
     try {
       const pendingLabTechnicians = await db.query.pendingLabTechnicians.findMany();
       res.json(pendingLabTechnicians);
@@ -575,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API endpoint to verify a lab technician (admin only)
-  app.put('/api/admin/verify-labTechnician/:labTechnicianId', async (req, res) => {
+  app.put('/api/admin/verify-lab-technician/:labTechnicianId', async (req, res) => {
     try {
       const { labTechnicianId } = req.params;
       
