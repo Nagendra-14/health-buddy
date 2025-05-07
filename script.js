@@ -1751,23 +1751,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show toast notification
-    // Track the last shown toast to prevent duplicates
-    let lastToastMessage = '';
-    let lastToastTime = 0;
-    
     function showToast(message, type = 'success') {
-        const now = Date.now();
-        
-        // Prevent duplicate toast messages within 3 seconds
-        if (message === lastToastMessage && now - lastToastTime < 3000) {
-            console.log("Preventing duplicate toast message:", message);
-            return;
-        }
-        
-        // Update tracking variables
-        lastToastMessage = message;
-        lastToastTime = now;
-        
         const toast = document.getElementById('toast');
         const toastMessage = toast.querySelector('.toast-message');
         
