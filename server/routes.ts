@@ -18,6 +18,8 @@ const __dirname = dirname(__filename);
 // Create endpoints for user visits
 let visitsData: { userId: string; timestamp: string; }[] = [];
 
+import { pendingReceptionists, pendingLabTechnicians, receptionists, labTechnicians } from '@shared/schema';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize database and load data
   try {
