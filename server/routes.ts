@@ -459,35 +459,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doctorId = req.query.doctorId as string;
       const patientId = req.query.patientId as string;
       
+      console.log('Fetching prescriptions with filters:', { doctorId, patientId, currentUser: req.query.currentUser });
+      
       let prescriptionsData;
       
       // Filter prescriptions by doctorId if provided
       if (doctorId) {
+        console.log(`Finding prescriptions for doctor: ${doctorId}`);
         prescriptionsData = await db.query.prescriptions.findMany({
           where: eq(prescriptions.doctorId, doctorId)
         });
       } 
       // Filter prescriptions by patientId if provided
       else if (patientId) {
+        console.log(`Finding prescriptions for patient: ${patientId}`);
         prescriptionsData = await db.query.prescriptions.findMany({
           where: eq(prescriptions.patientId, patientId)
         });
       }
       // Get all prescriptions if no filter is provided
       else {
+        console.log('No filters provided, returning all prescriptions');
         prescriptionsData = await db.query.prescriptions.findMany();
       }
       
+      console.log(`Found ${prescriptionsData.length} prescriptions`);
+      
       // Parse medications from JSON string
-      const results = prescriptionsData.map(prescription => ({
-        ...prescription,
-        medications: JSON.parse(prescription.medications)
-      }));
+      const results = prescriptionsData.map(prescription => {
+        try {
+          return {
+            ...prescription,
+            medications: prescription.medications ? JSON.parse(prescription.medications) : []
+          };
+        } catch (err) {
+          console.error(`Error parsing medications for prescription ${prescription.id}:`, err);
+          return {
+            ...prescription,
+            medications: [] // Default to empty array if parsing fails
+          };
+        }
+      });
       
       res.json(results);
     } catch (error) {
       console.error('Error getting prescriptions:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ 
+        message: 'Internal server error', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
   
