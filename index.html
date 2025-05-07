@@ -14,6 +14,28 @@
         // Debug script to help diagnose sidebar issues
         window.addEventListener('DOMContentLoaded', function() {
             console.log('Page loaded');
+            
+            // Check if React is trying to mount and prevent it
+            if (window.location.pathname === '/') {
+                // This is our vanilla JS app, prevent React from taking over
+                const rootElement = document.getElementById('root');
+                if (rootElement) {
+                    // If React tries to mount here, we'll redirect it
+                    Object.defineProperty(rootElement, 'innerHTML', {
+                        set: function(value) {
+                            // Only allow our vanilla JS content
+                            if (!value.includes('ReactDOM') && !value.includes('createRoot')) {
+                                HTMLElement.prototype.__lookupSetter__('innerHTML').call(this, value);
+                            } else {
+                                console.log('Prevented React from mounting at root');
+                            }
+                        },
+                        get: function() {
+                            return HTMLElement.prototype.__lookupGetter__('innerHTML').call(this);
+                        }
+                    });
+                }
+            }
         });
     </script>
     

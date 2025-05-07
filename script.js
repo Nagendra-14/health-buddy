@@ -264,75 +264,114 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for existing login
     function checkExistingLogin() {
         try {
+            // Make sure the app is fully loaded first
+            if (!document.getElementById('loginPage')) {
+                console.log("Health Buddy app elements not loaded yet, waiting...");
+                setTimeout(checkExistingLogin, 500);
+                return;
+            }
+            
+            // Check for saved user data
             const savedUser = localStorage.getItem('healthBuddyUser');
             if (!savedUser) {
+                console.log("No saved user found in localStorage");
                 return; // No saved user, nothing to do
             }
             
             // Try to parse the saved user data
-            const user = JSON.parse(savedUser);
-            if (!user || !user.type || !user.name || !user.id) {
-                throw new Error('Invalid user data format');
-            }
-            
-            // Set current user
-            currentUser = user;
-            document.body.dataset.userType = user.type;
-            
-            // Hide login page
-            const loginPage = document.getElementById('loginPage');
-            if (loginPage) {
+            try {
+                const user = JSON.parse(savedUser);
+                if (!user || !user.type || !user.name || !user.id) {
+                    throw new Error('Invalid user data format');
+                }
+                
+                // Set current user
+                currentUser = user;
+                console.log("Found saved user:", user.name, "Type:", user.type);
+                
+                // Set user type on body
+                document.body.dataset.userType = user.type;
+                
+                // Hide login page
+                const loginPage = document.getElementById('loginPage');
+                if (!loginPage) {
+                    console.error("Login page element not found!");
+                    throw new Error('Login page element not found');
+                }
                 loginPage.classList.remove('active');
-            }
-            
-            // Show dashboard page
-            const dashboardPage = document.getElementById('dashboardPage');
-            if (dashboardPage && !dashboardPage.classList.contains('active')) {
-                dashboardPage.classList.add('active');
-            }
-            
-            // Make sidebar visible
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
+                
+                // Show dashboard page
+                const dashboardPage = document.getElementById('dashboardPage');
+                if (!dashboardPage) {
+                    console.error("Dashboard page element not found!");
+                    throw new Error('Dashboard page element not found');
+                }
+                
+                if (!dashboardPage.classList.contains('active')) {
+                    dashboardPage.classList.add('active');
+                }
+                
+                // Make sidebar visible
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar) {
+                    console.error("Sidebar element not found!");
+                    throw new Error('Sidebar element not found');
+                }
+                
                 console.log("Found sidebar element, making it visible");
                 sidebar.style.display = 'flex';
                 sidebar.style.visibility = 'visible';
                 sidebar.style.opacity = '1';
                 sidebar.style.transform = 'translateX(0)';
+                
+                // Setup navigation and update user info with a delay to ensure DOM is ready
+                setTimeout(() => {
+                    try {
+                        setupNavigation();
+                        updateUserInfo();
+                        
+                        // Determine which dashboard to show
+                        let dashboardId = '';
+                        switch(user.type) {
+                            case 'doctor': dashboardId = 'doctorDashboard'; break;
+                            case 'patient': dashboardId = 'patientDashboard'; break;
+                            case 'receptionist': dashboardId = 'receptionistDashboard'; break;
+                            case 'labTechnician': dashboardId = 'labTechnicianDashboard'; break;
+                            default: dashboardId = 'doctorDashboard';
+                        }
+                        
+                        if (dashboardId) {
+                            console.log("Auto-navigating to dashboard:", dashboardId);
+                            navigateTo(dashboardId);
+                        }
+                        
+                        console.log("Login check complete - user loaded:", user.name);
+                        
+                        // Apply emergency sidebar fix if needed
+                        setTimeout(() => {
+                            if (sidebar && getComputedStyle(sidebar).display === 'none') {
+                                console.log("Running emergency sidebar fix");
+                                sidebar.style.display = 'flex !important';
+                                sidebar.style.visibility = 'visible !important';
+                                sidebar.style.opacity = '1 !important';
+                                document.body.classList.add('sidebar-visible');
+                                console.log("Applied emergency sidebar fix");
+                            }
+                        }, 1000);
+                    } catch (innerError) {
+                        console.error("Error in navigation setup:", innerError);
+                        // If there's an error in the navigation setup, log out
+                        localStorage.removeItem('healthBuddyUser');
+                        location.reload();
+                    }
+                }, 300);
+            } catch (parseError) {
+                console.error("Error parsing user data:", parseError);
+                throw parseError;
             }
-            
-            // Setup navigation and update user info
-            setTimeout(() => {
-                try {
-                    setupNavigation();
-                    updateUserInfo();
-                    
-                    // Determine which dashboard to show
-                    let dashboardId = '';
-                    switch(user.type) {
-                        case 'doctor': dashboardId = 'doctorDashboard'; break;
-                        case 'patient': dashboardId = 'patientDashboard'; break;
-                        case 'receptionist': dashboardId = 'receptionistDashboard'; break;
-                        case 'labTechnician': dashboardId = 'labTechnicianDashboard'; break;
-                        default: dashboardId = 'doctorDashboard';
-                    }
-                    
-                    if (dashboardId) {
-                        console.log("Auto-navigating to dashboard:", dashboardId);
-                        navigateTo(dashboardId);
-                    }
-                    
-                    console.log("Login check complete - user loaded:", user.name);
-                } catch (innerError) {
-                    console.error("Error in navigation setup:", innerError);
-                    // If there's an error in the navigation setup, log out
-                    localStorage.removeItem('healthBuddyUser');
-                    location.reload();
-                }
-            }, 300);
         } catch (e) {
             console.error("Error in checkExistingLogin:", e);
-            // Clear invalid user data and reload
+            // Clear invalid user data
             localStorage.removeItem('healthBuddyUser');
             
             // Don't reload immediately - let the page finish loading first

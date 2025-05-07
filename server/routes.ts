@@ -43,6 +43,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.resolve(__dirname, '../script.js'));
   });
   
+  // Serve user-role-functions.js
+  app.get('/user-role-functions.js', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../user-role-functions.js'));
+  });
+  
+  // Ensure all static assets for Health Buddy are explicitly routed
+  app.use('/assets', (req, res, next) => {
+    const filePath = path.resolve(__dirname, `../assets${req.path}`);
+    // Check if file exists and serve it
+    if (require('fs').existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      next();
+    }
+  });
+  
   // Admin dashboard for viewing all data
   app.get('/admin', (req, res) => {
     // Check for admin auth in query params or session
