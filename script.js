@@ -1656,19 +1656,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize specific page components
             if (pageId === 'startTests' && currentUser && currentUser.type === 'doctor') {
                 console.log("Should load patients for test form now.");
-                // Load test types
-                fetchTestTypes().then(types => {
-                    const testTypeSelect = document.getElementById('testType');
-                    if (testTypeSelect) {
-                        testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
-                        types.forEach(type => {
-                            const option = document.createElement('option');
-                            option.value = type;
-                            option.textContent = type;
-                            testTypeSelect.appendChild(option);
-                        });
-                    }
-                }).catch(err => console.error('Error loading test types:', err));
+                // Load test types using our centralized function
+                populateTestTypeDropdown('testType').catch(err => console.error('Error loading test types:', err));
                 
                 // Load patients for test form
                 loadPatientsForTest();
@@ -2817,7 +2806,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // API function to fetch test types
+    // Centralized API function to fetch test types (used across all user interfaces)
     async function fetchTestTypes() {
         try {
             const response = await fetch('/api/test-types');
@@ -2829,6 +2818,38 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching test types:', error);
             showToast('Error loading test types. Please try again.', 'error');
             return [];
+        }
+    }
+    
+    // Helper function to populate any test type dropdown with consistent options
+    async function populateTestTypeDropdown(selectElementId) {
+        const selectElement = document.getElementById(selectElementId);
+        if (!selectElement) {
+            console.error(`Test type select element with ID '${selectElementId}' not found`);
+            return;
+        }
+        
+        // Clear existing options
+        selectElement.innerHTML = '<option value="">Select Test Type</option>';
+        
+        try {
+            // Fetch test types from centralized API
+            const testTypes = await fetchTestTypes();
+            
+            if (testTypes && testTypes.length > 0) {
+                // Add each test type as an option
+                testTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    selectElement.appendChild(option);
+                });
+                console.log(`Populated ${testTypes.length} test types in ${selectElementId}`);
+            } else {
+                console.error('No test types returned from API');
+            }
+        } catch (error) {
+            console.error(`Error populating test type dropdown ${selectElementId}:`, error);
         }
     }
     
@@ -2845,28 +2866,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             tests = await response.json();
             
-            // Also populate the test type dropdown
-            const testTypeSelect = document.getElementById('testType');
-            if (testTypeSelect) {
-                testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
-                
-                // Get test types from API
-                try {
-                    const testTypesData = await fetchTestTypes();
-                    if (testTypesData && testTypesData.length > 0) {
-                        testTypesData.forEach(type => {
-                            const option = document.createElement('option');
-                            option.value = type;
-                            option.textContent = type;
-                            testTypeSelect.appendChild(option);
-                        });
-                    } else {
-                        console.error('No test types returned from API');
-                    }
-                } catch (error) {
-                    console.error('Error fetching test types:', error);
-                }
-            }
+            // Populate the test type dropdown using our centralized function
+            await populateTestTypeDropdown('testType');
             
             // Populate dashboard pending tests section
             const dashboardTestsList = document.getElementById('pendingTestsList');
