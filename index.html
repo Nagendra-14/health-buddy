@@ -13,28 +13,7 @@
     <script>
         // Debug script to help diagnose sidebar issues
         window.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded. Adding sidebar debug');
-            
-            // Add listener to check sidebar visibility every second
-            setInterval(function() {
-                const sidebar = document.getElementById('sidebar');
-                const navLinks = document.getElementById('navLinks');
-                if (sidebar) {
-                    console.log('Sidebar element:', 
-                        'display:', getComputedStyle(sidebar).display,
-                        'visibility:', getComputedStyle(sidebar).visibility,
-                        'transform:', getComputedStyle(sidebar).transform
-                    );
-                    
-                    if (navLinks) {
-                        console.log('NavLinks children:', navLinks.children.length);
-                    } else {
-                        console.log('NavLinks element not found');
-                    }
-                } else {
-                    console.log('Sidebar element not found');
-                }
-            }, 2000);
+            console.log('Page loaded');
         });
     </script>
     
