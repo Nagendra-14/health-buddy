@@ -52,23 +52,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // API function to fetch appointments
     async function fetchAppointments(doctorId = null, patientId = null) {
         try {
+            // Build URL with query parameters
             let url = '/api/appointments';
-            // Add query parameters if provided
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`;
-            } else if (patientId) {
-                url += `?patientId=${patientId}`;
+            const params = [];
+            
+            if (doctorId) params.push(`doctorId=${doctorId}`);
+            if (patientId) params.push(`patientId=${patientId}`);
+            if (params.length > 0) url += `?${params.join('&')}`;
+            
+            // Apply retry logic for resilience
+            let retries = 0;
+            const maxRetries = 3;
+            
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    try {
+                        const data = await response.json();
+                        return data;
+                    } catch (parseError) {
+                        console.error('Failed to parse JSON response:', parseError);
+                        throw new Error('Invalid API response format');
+                    }
+                } catch (fetchError) {
+                    retries++;
+                    console.warn(`Fetch attempt ${retries} failed:`, fetchError.message);
+                    
+                    if (retries >= maxRetries) {
+                        throw fetchError;
+                    }
+                    
+                    // Wait before retrying (exponential backoff)
+                    await new Promise(r => setTimeout(r, 500 * Math.pow(2, retries)));
+                }
             }
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Failed to fetch appointments');
-            }
-            const data = await response.json();
-            return data;
+            throw new Error('Maximum retry attempts reached');
         } catch (error) {
             console.error('Error fetching appointments:', error);
-            showToast('Error loading appointments. Please try again.', 'error');
+            // Return empty array instead of showing error to prevent breaking the UI
             return [];
         }
     }
@@ -1784,19 +1811,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show toast notification
     function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const toastMessage = toast.querySelector('.toast-message');
-        
-        // Set message and type
-        toastMessage.textContent = message;
-        toast.className = 'toast';
-        toast.classList.add(type);
-        toast.classList.add('show');
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        try {
+            const toast = document.getElementById('toast');
+            if (!toast) {
+                console.error('Toast element not found');
+                return;
+            }
+            
+            const toastMessage = toast.querySelector('.toast-message');
+            if (!toastMessage) {
+                console.error('Toast message element not found');
+                return;
+            }
+            
+            // Set message and type
+            toastMessage.textContent = message;
+            toast.className = 'toast';
+            toast.classList.add(type);
+            toast.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        } catch (error) {
+            console.error('Error showing toast:', error);
+        }
     }
     
     // ===============================================================
