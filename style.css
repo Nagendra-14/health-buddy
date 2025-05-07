@@ -1119,3 +1119,33 @@ body.mobile-device .status-badge {
     from {opacity: 0; transform: translateY(-50px);}
     to {opacity: 1; transform: translateY(0);}
 }
+
+/* Force visibility of dashboard elements */
+#dashboardPage.active {
+    display: block !important;
+}
+
+#dashboardPage.active #sidebar {
+    display: flex !important;
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+}
+
+#dashboardPage.active .main-content {
+    display: block !important;
+    visibility: visible !important;
+}
+
+#navLinks {
+    display: block !important;
+}
+
+#navLinks li {
+    display: list-item !important;
+}
+
+#navLinks li a {
+    display: flex !important;
+}

@@ -170,10 +170,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 const user = JSON.parse(savedUser);
                 currentUser = user;
                 document.body.dataset.userType = user.type;
-                showDashboard();
+                
+                // Ensure the dashboard page is visible
+                const loginPage = document.getElementById('loginPage');
+                const dashboardPage = document.getElementById('dashboardPage');
+                loginPage.classList.remove('active');
+                dashboardPage.classList.add('active');
+                
+                // Explicitly ensure the sidebar is visible by directly accessing it
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) {
+                    console.log("Found sidebar element, making it visible");
+                    sidebar.style.display = 'flex';
+                    sidebar.style.visibility = 'visible';
+                    sidebar.style.opacity = '1';
+                    sidebar.style.transform = 'translateX(0)';
+                } else {
+                    console.error("Sidebar element not found in the DOM!");
+                }
+                
+                // Perform navigation setup and load user data
                 setupNavigation();
                 updateUserInfo();
+                
+                // Add debug info
+                console.log("Login check complete - user loaded:", user.name);
             } catch (e) {
+                console.error("Error in checkExistingLogin:", e);
                 // Invalid saved user data
                 localStorage.removeItem('healthBuddyUser');
             }
@@ -383,8 +406,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Record this login for visit tracking
                 await recordUserVisit(authenticatedUser.id);
                 
-                // Show dashboard and setup navigation
-                showDashboard();
+                // Explicitly show dashboard and ensure sidebar visibility
+                const loginPage = document.getElementById('loginPage');
+                const dashboardPage = document.getElementById('dashboardPage');
+                loginPage.classList.remove('active');
+                dashboardPage.classList.add('active');
+                
+                // Ensure the sidebar is visible
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) {
+                    sidebar.style.display = 'flex';
+                    sidebar.style.visibility = 'visible';
+                    sidebar.style.opacity = '1';
+                    sidebar.style.transform = 'translateX(0)';
+                    console.log("Sidebar explicitly made visible during login");
+                } else {
+                    console.error("Sidebar element not found during login!");
+                }
+                
+                // Setup navigation and update user info
                 setupNavigation();
                 updateUserInfo();
                 
