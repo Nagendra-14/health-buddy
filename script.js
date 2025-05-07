@@ -642,46 +642,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const requestAppointmentBtn = document.getElementById('requestAppointmentBtn');
     if (requestAppointmentBtn) {
         requestAppointmentBtn.addEventListener('click', function() {
-            // Set current date as minimum date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('appointmentDate').min = today;
-            document.getElementById('appointmentDate').value = today;
+            // Get references to date and doctor selection elements
+            const dateInput = document.getElementById('appointmentDate');
+            const doctorSelect = document.getElementById('appointmentDoctor');
+            const timeSelect = document.getElementById('appointmentTime');
             
-            // Configure time input for 30-minute slots
-            const timeInput = document.getElementById('appointmentTime');
-            if (timeInput) {
-                // Add an event listener to enforce 30-minute slots
-                timeInput.addEventListener('change', function() {
-                    if (this.value) {
-                        // Extract hours and minutes
-                        const [hours, minutes] = this.value.split(':').map(Number);
-                        
-                        // Round to nearest 30-minute slot
-                        const roundedMinutes = minutes < 30 ? '00' : '30';
-                        const formattedHours = hours.toString().padStart(2, '0');
-                        
-                        // Set the standardized time
-                        this.value = `${formattedHours}:${roundedMinutes}`;
+            // Set current date as minimum date and default value
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+            dateInput.value = today;
+            
+            // Show toast notification about time slots
+            showToast('Select doctor and date to view available 30-minute appointment slots', 'info');
+            
+            // Add event listeners to date and doctor selects to update time slots
+            if (dateInput && doctorSelect && timeSelect) {
+                // Update time slots when doctor changes
+                doctorSelect.addEventListener('change', function() {
+                    const selectedDoctorId = this.value;
+                    const selectedDate = dateInput.value;
+                    
+                    if (selectedDoctorId && selectedDate) {
+                        updateTimeSlotOptions(timeSelect, selectedDoctorId, selectedDate);
                     }
                 });
                 
-                // Set default time to current hour, rounded to next 30-minute slot
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                let defaultHour = currentHour;
-                let defaultMinute = currentMinute < 30 ? '30' : '00';
-                
-                // If minutes > 30, increment to next hour
-                if (currentMinute >= 30) {
-                    defaultHour = (currentHour + 1) % 24;
-                }
-                
-                timeInput.value = `${defaultHour.toString().padStart(2, '0')}:${defaultMinute}`;
+                // Update time slots when date changes
+                dateInput.addEventListener('change', function() {
+                    const selectedDate = this.value;
+                    const selectedDoctorId = doctorSelect.value;
+                    
+                    if (selectedDoctorId && selectedDate) {
+                        updateTimeSlotOptions(timeSelect, selectedDoctorId, selectedDate);
+                    }
+                });
             }
-            
-            // Show toast notification about time slots
-            showToast('Appointments are scheduled in 30-minute slots (00 or 30 minutes)', 'info');
             
             // Load doctors list
             loadDoctorsForAppointment();
@@ -690,6 +685,89 @@ document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('appointmentRequestModal');
             modal.style.display = 'block';
         });
+    }
+    
+    // Function to generate 30-minute time slots
+    function generateTimeSlots(startHour = 8, endHour = 17) {
+        const slots = [];
+        
+        // Generate slots from startHour to endHour
+        for (let hour = startHour; hour <= endHour; hour++) {
+            // Add :00 slot
+            slots.push(`${hour.toString().padStart(2, '0')}:00`);
+            
+            // Add :30 slot
+            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+        
+        return slots;
+    }
+    
+    // Function to filter time slots based on existing appointments
+    async function getAvailableTimeSlots(doctorId, appointmentDate) {
+        if (!doctorId || !appointmentDate) {
+            return generateTimeSlots(); // Return all slots if no doctor or date selected
+        }
+        
+        try {
+            // Get all slots
+            const allSlots = generateTimeSlots();
+            
+            // Get doctor's appointments for that date
+            const response = await fetch(`/api/appointments?doctorId=${doctorId}&date=${appointmentDate}`);
+            
+            if (!response.ok) {
+                console.error('Failed to fetch doctor appointments');
+                return allSlots; // Return all slots if fetch fails
+            }
+            
+            const appointments = await response.json();
+            
+            // Filter out booked slots (excluding cancelled appointments)
+            const bookedSlots = appointments
+                .filter(app => app.status !== 'Cancelled')
+                .map(app => app.time);
+            
+            // Return available slots
+            return allSlots.filter(slot => !bookedSlots.includes(slot));
+        } catch (error) {
+            console.error('Error getting available time slots:', error);
+            return generateTimeSlots(); // Return all slots on error
+        }
+    }
+    
+    // Function to update time slot options in appointment forms
+    async function updateTimeSlotOptions(selectElement, doctorId, appointmentDate) {
+        if (!selectElement) return;
+        
+        try {
+            // Show loading indicator
+            selectElement.innerHTML = '<option value="">Loading time slots...</option>';
+            
+            // Get available slots
+            const availableSlots = await getAvailableTimeSlots(doctorId, appointmentDate);
+            
+            // Clear and populate select element
+            selectElement.innerHTML = '<option value="">Select a time</option>';
+            
+            availableSlots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot;
+                option.textContent = slot;
+                selectElement.appendChild(option);
+            });
+            
+            // If no available slots, show message
+            if (availableSlots.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "No available slots for this date";
+                selectElement.appendChild(option);
+            }
+        } catch (error) {
+            console.error('Error updating time slots:', error);
+            selectElement.innerHTML = '<option value="">Error loading time slots</option>';
+        }
     }
     
     // Function to load doctors for appointment request
@@ -2933,55 +3011,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const doctorAppointmentModal = document.getElementById('doctorAppointmentModal');
         
         if (newDoctorAppointmentBtn && doctorAppointmentModal) {
-            // Configure time input for 30-minute slots
-            const timeInput = document.getElementById('doctorAppointmentTime');
-            if (timeInput) {
-                // Set 30-minute step for time input
-                timeInput.step = 1800; // 30 minutes in seconds
-                
-                // Add an event listener to enforce 30-minute slots
-                timeInput.addEventListener('change', function() {
-                    if (this.value) {
-                        // Extract hours and minutes
-                        const [hours, minutes] = this.value.split(':').map(Number);
-                        
-                        // Round to nearest 30-minute slot
-                        const roundedMinutes = minutes < 30 ? '00' : '30';
-                        const formattedHours = hours.toString().padStart(2, '0');
-                        
-                        // Set the standardized time
-                        this.value = `${formattedHours}:${roundedMinutes}`;
-                    }
-                });
-                
-                // Set default time to current hour, rounded to next 30-minute slot
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                let defaultHour = currentHour;
-                let defaultMinute = currentMinute < 30 ? '30' : '00';
-                
-                // If minutes > 30, increment to next hour
-                if (currentMinute >= 30) {
-                    defaultHour = (currentHour + 1) % 24;
-                }
-                
-                timeInput.value = `${defaultHour.toString().padStart(2, '0')}:${defaultMinute}`;
-            }
-            
             // Open modal when button is clicked
             newDoctorAppointmentBtn.addEventListener('click', function() {
                 doctorAppointmentModal.style.display = 'block';
                 
-                // Load patients for the select dropdown
-                loadPatientsForAppointment();
+                // Get references to form elements
+                const dateInput = document.getElementById('doctorAppointmentDate');
+                const patientSelect = document.getElementById('doctorAppointmentPatient');
+                const timeSelect = document.getElementById('doctorAppointmentTime');
                 
                 // Set default date to today
                 const today = new Date().toISOString().split('T')[0];
-                document.getElementById('doctorAppointmentDate').value = today;
+                dateInput.min = today;
+                dateInput.value = today;
                 
-                // Show a note about 30-minute slots
-                showToast('Appointments are scheduled in 30-minute slots (00 or 30 minutes)', 'info');
+                // Load patients for the select dropdown
+                loadPatientsForAppointment();
+                
+                // Add event listeners to update time slots when date changes
+                dateInput.addEventListener('change', function() {
+                    // Use current user (doctor) ID to check their availability
+                    const doctorId = currentUser.id;
+                    updateTimeSlotOptions(timeSelect, doctorId, this.value);
+                });
+                
+                // Initialize time slots for today
+                if (currentUser && currentUser.id) {
+                    updateTimeSlotOptions(timeSelect, currentUser.id, today);
+                }
+                
+                // Show a note about the available time slots
+                showToast('Select a date to view available 30-minute appointment slots', 'info');
             });
             
             // Close modal when X is clicked
