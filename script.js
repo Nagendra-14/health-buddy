@@ -1212,6 +1212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedPage) {
             selectedPage.classList.add('active');
             currentPage = pageId;
+            console.log("Navigated to page:", pageId);
             
             // Update page title
             updatePageTitle(pageId);
@@ -1221,6 +1222,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Initialize specific page components
             if (pageId === 'startTests' && currentUser && currentUser.type === 'doctor') {
+                console.log("Should load patients for test form now.");
+                // Load test types
+                fetchTestTypes().then(types => {
+                    const testTypeSelect = document.getElementById('testType');
+                    if (testTypeSelect) {
+                        testTypeSelect.innerHTML = '<option value="">Select Test Type</option>';
+                        types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type;
+                            testTypeSelect.appendChild(option);
+                        });
+                    }
+                }).catch(err => console.error('Error loading test types:', err));
+                
                 // Load patients for test form
                 loadPatientsForTest();
             }
@@ -2543,41 +2559,46 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadPatientsForTest() {
         try {
             console.log("Loading patients for test form", currentUser);
+            // Ensure dropdown exists before proceeding
+            const patientSelect = document.getElementById('testPatient');
+            console.log("Patient select element exists:", patientSelect !== null);
+            
+            if (!patientSelect) {
+                console.error("Test patient select element not found in DOM");
+                // Check if we're even on the correct page
+                const testPage = document.getElementById('startTests');
+                console.log("Start Tests page exists:", testPage !== null, "Is active:", testPage?.classList.contains('active'));
+                return;
+            }
+            
             // Get patients from API
             const patients = await fetchPatients();
             console.log("Fetched patients:", patients);
             
-            // Populate select dropdown
-            const patientSelect = document.getElementById('testPatient');
-            console.log("Patient select element:", patientSelect);
+            // Clear existing options
+            patientSelect.innerHTML = '<option value="">Select Patient</option>';
             
-            if (patientSelect) {
-                patientSelect.innerHTML = '<option value="">Select Patient</option>';
-                
-                // Only show patients assigned to this doctor
-                let filteredPatients = patients;
-                if (currentUser && currentUser.type === 'doctor') {
-                    console.log("Filtering patients for doctor ID:", currentUser.id);
-                    filteredPatients = patients.filter(p => p.doctorId === currentUser.id);
-                    console.log("Filtered patients count:", filteredPatients.length);
-                    if (filteredPatients.length === 0) {
-                        // If no patients are assigned to this doctor, show all patients
-                        console.log("No patients found for this doctor, using all patients instead");
-                        filteredPatients = patients;
-                    }
+            // Only show patients assigned to this doctor
+            let filteredPatients = patients;
+            if (currentUser && currentUser.type === 'doctor') {
+                console.log("Filtering patients for doctor ID:", currentUser.id);
+                filteredPatients = patients.filter(p => p.doctorId === currentUser.id);
+                console.log("Filtered patients count:", filteredPatients.length);
+                if (filteredPatients.length === 0) {
+                    // If no patients are assigned to this doctor, show all patients
+                    console.log("No patients found for this doctor, using all patients instead");
+                    filteredPatients = patients;
                 }
-                
-                filteredPatients.forEach(patient => {
-                    const option = document.createElement('option');
-                    option.value = patient.id;
-                    option.textContent = patient.name;
-                    patientSelect.appendChild(option);
-                });
-                
-                console.log(`Loaded ${filteredPatients.length} patients for test form`);
-            } else {
-                console.error("Test patient select element not found");
             }
+            
+            filteredPatients.forEach(patient => {
+                const option = document.createElement('option');
+                option.value = patient.id;
+                option.textContent = patient.name;
+                patientSelect.appendChild(option);
+            });
+            
+            console.log(`Loaded ${filteredPatients.length} patients for test form`);
         } catch (error) {
             console.error('Error loading patients for test form:', error);
             showToast('Failed to load patients for tests. Please try again.', 'error');
