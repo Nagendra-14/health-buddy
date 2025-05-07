@@ -72,6 +72,8 @@
                         <select id="userType" class="form-control" required>
                             <option value="doctor">Doctor</option>
                             <option value="patient">Patient</option>
+                            <option value="receptionist">Receptionist</option>
+                            <option value="labTechnician">Lab Technician</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -88,6 +90,8 @@
                         <select id="registerUserType" class="form-control" required>
                             <option value="patient">Patient</option>
                             <option value="doctor">Doctor</option>
+                            <option value="receptionist">Receptionist</option>
+                            <option value="labTechnician">Lab Technician</option>
                         </select>
                     </div>
                     
@@ -192,6 +196,34 @@
                             <select id="registerDoctor" class="form-control">
                                 <option value="">Select a Doctor</option>
                                 <!-- Doctor options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Receptionist-specific fields -->
+                    <div id="receptionistFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="registerDepartment">Department</label>
+                            <select id="registerDepartment" class="form-control">
+                                <option value="Main Reception">Main Reception</option>
+                                <option value="Emergency">Emergency</option>
+                                <option value="Outpatient">Outpatient</option>
+                                <option value="Specialist Clinic">Specialist Clinic</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Lab Technician-specific fields -->
+                    <div id="labTechnicianFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="registerSpecialization">Specialization</label>
+                            <select id="registerSpecialization" class="form-control">
+                                <option value="Hematology">Hematology</option>
+                                <option value="Biochemistry">Biochemistry</option>
+                                <option value="Microbiology">Microbiology</option>
+                                <option value="Cytology">Cytology</option>
+                                <option value="Histopathology">Histopathology</option>
+                                <option value="Clinical Pathology">Clinical Pathology</option>
                             </select>
                         </div>
                     </div>

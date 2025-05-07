@@ -35,6 +35,32 @@ export const patients = pgTable('patients', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// Receptionists table
+export const receptionists = pgTable('receptionists', {
+  id: text('id').primaryKey(), // Using the format 'R001'
+  name: text('name').notNull(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  contact: text('contact'),
+  email: text('email'),
+  department: text('department'),
+  avatar_url: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Lab Technicians table
+export const labTechnicians = pgTable('lab_technicians', {
+  id: text('id').primaryKey(), // Using the format 'L001'
+  name: text('name').notNull(),
+  username: text('username').notNull().unique(), 
+  password: text('password').notNull(),
+  specialization: text('specialization'),
+  contact: text('contact'),
+  email: text('email'),
+  avatar_url: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
 // Pending doctors waiting for verification
 export const pendingDoctors = pgTable('pending_doctors', {
   id: text('id').primaryKey(), // Using the existing format like 'D003'
@@ -168,3 +194,11 @@ export type Report = typeof reports.$inferSelect;
 export const userVisitInsertSchema = createInsertSchema(userVisits);
 export type UserVisitInsert = z.infer<typeof userVisitInsertSchema>;
 export type UserVisit = typeof userVisits.$inferSelect;
+
+export const receptionistInsertSchema = createInsertSchema(receptionists);
+export type ReceptionistInsert = z.infer<typeof receptionistInsertSchema>;
+export type Receptionist = typeof receptionists.$inferSelect;
+
+export const labTechnicianInsertSchema = createInsertSchema(labTechnicians);
+export type LabTechnicianInsert = z.infer<typeof labTechnicianInsertSchema>;
+export type LabTechnician = typeof labTechnicians.$inferSelect;

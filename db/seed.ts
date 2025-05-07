@@ -1,7 +1,8 @@
 import { db } from './index';
 import { 
   doctors, patients, pendingDoctors, appointments, 
-  tests, prescriptions, reports, userVisits 
+  tests, prescriptions, reports, userVisits,
+  receptionists, labTechnicians
 } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 
@@ -339,6 +340,36 @@ async function seed() {
       }
     ]);
     console.log('Prescriptions seeded');
+    
+    // Seed receptionists
+    await db.insert(receptionists).values([
+      {
+        id: 'R001',
+        name: 'Priya Sharma',
+        username: 'psharma',
+        password: 'sharma2025',
+        contact: '555-7001',
+        email: 'priya.sharma@example.com',
+        department: 'Main Reception',
+        avatar_url: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      }
+    ]);
+    console.log('Receptionists seeded');
+    
+    // Seed lab technicians
+    await db.insert(labTechnicians).values([
+      {
+        id: 'L001',
+        name: 'Arjun Patel',
+        username: 'apatel',
+        password: 'patel2025',
+        specialization: 'Hematology',
+        contact: '555-8001',
+        email: 'arjun.patel@example.com',
+        avatar_url: 'https://images.unsplash.com/photo-1566753323558-f4e0952af115?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100'
+      }
+    ]);
+    console.log('Lab Technicians seeded');
 
     // Test data
     await db.insert(tests).values([

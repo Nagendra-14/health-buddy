@@ -378,18 +378,29 @@ document.addEventListener('DOMContentLoaded', function() {
         loadDoctorsForRegistration();
     });
     
-    // Toggle doctor/patient specific fields in registration form
+    // Toggle role-specific fields in registration form
     document.getElementById('registerUserType').addEventListener('change', function() {
         const userType = this.value;
         const doctorFields = document.getElementById('doctorFields');
         const patientFields = document.getElementById('patientFields');
+        const receptionistFields = document.getElementById('receptionistFields');
+        const labTechnicianFields = document.getElementById('labTechnicianFields');
         
+        // Hide all fields first
+        doctorFields.style.display = 'none';
+        patientFields.style.display = 'none';
+        receptionistFields.style.display = 'none';
+        labTechnicianFields.style.display = 'none';
+        
+        // Show the relevant fields based on user type
         if (userType === 'doctor') {
             doctorFields.style.display = 'block';
-            patientFields.style.display = 'none';
-        } else {
-            doctorFields.style.display = 'none';
+        } else if (userType === 'patient') {
             patientFields.style.display = 'block';
+        } else if (userType === 'receptionist') {
+            receptionistFields.style.display = 'block';
+        } else if (userType === 'labTechnician') {
+            labTechnicianFields.style.display = 'block';
         }
     });
     
@@ -575,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     availability,
                     verified: false // Doctors start as unverified
                 };
-            } else {
+            } else if (userType === 'patient') {
                 // Patient specific fields
                 const age = document.getElementById('registerAge').value;
                 const gender = document.getElementById('registerGender').value;
@@ -596,6 +607,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     gender,
                     medicalHistory,
                     doctorId: doctorId || null
+                };
+            } else if (userType === 'receptionist') {
+                // Receptionist specific fields
+                const department = document.getElementById('registerDepartment').value;
+                
+                // Validate receptionist fields
+                if (!department) {
+                    showToast('Please select a department.', 'error');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                userData = {
+                    ...userData,
+                    department
+                };
+            } else if (userType === 'labTechnician') {
+                // Lab Technician specific fields
+                const specialization = document.getElementById('registerSpecialization').value;
+                
+                // Validate lab technician fields
+                if (!specialization) {
+                    showToast('Please select a specialization.', 'error');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                userData = {
+                    ...userData,
+                    specialization
                 };
             }
             
