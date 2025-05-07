@@ -991,6 +991,57 @@ body.mobile-device .status-badge {
     padding: 0.3rem 0.6rem; /* Easier to tap */
 }
 
+/* Utility Classes */
+.d-flex {
+    display: flex !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.text-warning {
+    color: #ff8f00 !important;
+}
+
+/* Conflict styling */
+.conflict-appointment {
+    position: relative;
+    background-color: rgba(255, 143, 0, 0.05) !important;
+    border-left: 3px solid #ff8f00 !important;
+}
+
+.conflict-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 143, 0, 0.1);
+    color: #ff8f00;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    margin-left: 8px;
+    font-size: 0.75rem;
+}
+
+.alert {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: var(--border-radius);
+    border-left: 4px solid transparent;
+}
+
+.alert-warning {
+    background-color: rgba(255, 143, 0, 0.1);
+    border-color: #ff8f00;
+    color: #7a4500;
+}
+
+.alert-warning i {
+    color: #ff8f00;
+    margin-right: 8px;
+}
+
 /* Small devices (phones, up to 576px) */
 @media (max-width: 576px) {
     html {

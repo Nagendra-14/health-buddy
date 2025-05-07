@@ -2085,13 +2085,25 @@ document.addEventListener('DOMContentLoaded', function() {
             todaysAppointments.forEach(app => {
                 const tr = document.createElement('tr');
                 tr.classList.add('clickable-row');
+                
+                // Add conflict styling if the appointment has conflicts
+                if (app.hasConflict) {
+                    tr.classList.add('conflict-appointment');
+                }
+                
                 // Add warning icon for conflicting appointments
                 const conflictWarning = app.hasConflict ? 
-                    `<i class="fas fa-exclamation-triangle text-warning" title="This appointment conflicts with ${app.conflictCount-1} other appointment(s)"></i> ` : 
+                    `<span class="conflict-badge" title="This appointment conflicts with ${app.conflictCount-1} other appointment(s)">
+                        <i class="fas fa-exclamation-triangle"></i>
+                     </span>` : 
                     '';
                     
                 tr.innerHTML = `
-                    <td>${conflictWarning}${app.patientName}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            ${app.patientName} ${conflictWarning}
+                        </div>
+                    </td>
                     <td>${app.time}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                 `;
@@ -2123,21 +2135,33 @@ document.addEventListener('DOMContentLoaded', function() {
             sortedAppointments.forEach(app => {
                 const tr = document.createElement('tr');
                 tr.classList.add('clickable-row');
+                
+                // Add conflict styling if the appointment has conflicts
+                if (app.hasConflict) {
+                    tr.classList.add('conflict-appointment');
+                }
+                
                 // Add warning icon for conflicting appointments
                 const conflictWarning = app.hasConflict ? 
-                    `<i class="fas fa-exclamation-triangle text-warning" title="This appointment conflicts with ${app.conflictCount-1} other appointment(s)"></i> ` : 
+                    `<span class="conflict-badge" title="This appointment conflicts with ${app.conflictCount-1} other appointment(s)">
+                        <i class="fas fa-exclamation-triangle"></i>
+                     </span>` : 
                     '';
                 
                 tr.innerHTML = `
-                    <td>${conflictWarning}${app.patientName}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            ${app.patientName} ${conflictWarning}
+                        </div>
+                    </td>
                     <td>${formatDate(app.date)}</td>
                     <td>${app.time}</td>
                     <td>${app.purpose}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>
                         <div class="table-actions">
-                            <button class="btn-link edit-appointment" data-id="${app.id}" title="Edit">
-                                <i class="fas fa-edit"></i>
+                            <button class="btn-link ${app.hasConflict ? 'text-warning' : ''} edit-appointment" data-id="${app.id}" title="${app.hasConflict ? 'Edit (Conflict!)' : 'Edit'}">
+                                <i class="fas ${app.hasConflict ? 'fa-exclamation-triangle' : 'fa-edit'}"></i>
                             </button>
                             <button class="btn-link cancel-appointment" data-id="${app.id}" title="Cancel">
                                 <i class="fas fa-times"></i>
