@@ -1294,15 +1294,61 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to a specific page
     function navigateTo(pageId) {
+        console.log("Navigating to page:", pageId, "Current user:", currentUser?.type);
+        
+        // Special handling for patient prescriptions
+        if (pageId === 'patientPrescriptions' && currentUser && currentUser.type === 'patient') {
+            console.log("Special handling for patient prescriptions");
+            
+            // Hide all content pages first
+            const contentPages = document.querySelectorAll('.content-page');
+            contentPages.forEach(page => {
+                page.style.display = 'none';
+                page.classList.remove('active');
+            });
+            
+            // Ensure the page exists
+            if (!document.getElementById('patientPrescriptions')) {
+                console.log("Creating patient prescriptions page on navigation");
+                createPatientPrescriptionsPage();
+            }
+            
+            // Get the page and ensure it's visible
+            const prescriptionsPage = document.getElementById('patientPrescriptions');
+            if (prescriptionsPage) {
+                prescriptionsPage.style.display = 'block';
+                prescriptionsPage.classList.add('active');
+                currentPage = pageId;
+                
+                // Update UI components
+                updatePageTitle(pageId);
+                updateActiveNavLink(pageId);
+                
+                // Load the prescriptions data
+                console.log("Loading patient prescriptions from navigation");
+                setTimeout(() => {
+                    loadPatientPrescriptions();
+                }, 100); // Small delay to ensure DOM is ready
+            } else {
+                console.error("Failed to create or find patient prescriptions page");
+                showToast("Error loading prescriptions page", "error");
+            }
+            
+            return;
+        }
+        
+        // Standard navigation for other pages
         // Hide all content pages
         const contentPages = document.querySelectorAll('.content-page');
         contentPages.forEach(page => {
+            page.style.display = 'none';
             page.classList.remove('active');
         });
         
         // Show the selected page
         const selectedPage = document.getElementById(pageId);
         if (selectedPage) {
+            selectedPage.style.display = 'block';
             selectedPage.classList.add('active');
             currentPage = pageId;
             console.log("Navigated to page:", pageId);
@@ -2027,18 +2073,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch prescriptions data
     async function fetchPrescriptions(doctorId = null, patientId = null) {
         try {
-            let url = '/api/prescriptions';
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`;
-            } else if (patientId) {
-                url += `?patientId=${patientId}`;
+            console.log('Fetching prescriptions for:', { doctorId, patientId, currentUser: currentUser?.id });
+            
+            // If no patientId provided but we have a patient user, use their ID
+            if (!patientId && currentUser && currentUser.type === 'patient') {
+                patientId = currentUser.id;
+                console.log('Using current patient ID:', patientId);
             }
+            
+            // Build the URL with parameters
+            let url = '/api/prescriptions';
+            const params = new URLSearchParams();
+            
+            if (doctorId) {
+                params.append('doctorId', doctorId);
+            }
+            
+            if (patientId) {
+                params.append('patientId', patientId);
+            }
+            
+            // Add params to URL if any exist
+            const paramString = params.toString();
+            if (paramString) {
+                url += `?${paramString}`;
+            }
+            
+            console.log('Fetching prescriptions from URL:', url);
             
             const response = await fetch(url);
             if (!response.ok) {
-                throw new Error('Failed to fetch prescriptions');
+                const errorText = await response.text();
+                console.error('Server response error:', errorText);
+                throw new Error(`Failed to fetch prescriptions: ${response.status} ${response.statusText}`);
             }
-            return await response.json();
+            
+            const data = await response.json();
+            console.log('Fetched prescriptions data:', data);
+            return data;
         } catch (error) {
             console.error('Error fetching prescriptions:', error);
             showToast('Error loading prescriptions. Please try again.', 'error');
