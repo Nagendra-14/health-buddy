@@ -1770,6 +1770,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load prescriptions for the patient
                 loadPatientPrescriptions();
             }
+            
+            if (pageId === 'doctorAppointments' && currentUser && currentUser.type === 'doctor') {
+                // Setup search and filters for doctor appointments
+                setupDoctorAppointmentSearchAndFilters();
+                
+                // Reload appointments with filters applied
+                loadDoctorAppointments();
+            }
         }
         
         // Close sidebar on mobile after navigation
@@ -1924,6 +1932,49 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===============================================================
     // DATA LOADING FUNCTIONS
     // ===============================================================
+    
+    // Setup doctor appointment search and filters
+    function setupDoctorAppointmentSearchAndFilters() {
+        try {
+            console.log('Setting up doctor appointment search and filters');
+            
+            // Search button
+            const searchBtn = document.getElementById('doctorAppointmentSearchBtn');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', () => {
+                    loadDoctorAppointments();
+                });
+            }
+            
+            // Search input (search on pressing Enter)
+            const searchInput = document.getElementById('doctorAppointmentSearch');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') {
+                        loadDoctorAppointments();
+                    }
+                });
+            }
+            
+            // Status filter
+            const statusFilter = document.getElementById('doctorAppointmentStatusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', () => {
+                    loadDoctorAppointments();
+                });
+            }
+            
+            // Date filter
+            const dateFilter = document.getElementById('doctorAppointmentDateFilter');
+            if (dateFilter) {
+                dateFilter.addEventListener('change', () => {
+                    loadDoctorAppointments();
+                });
+            }
+        } catch (error) {
+            console.error('Error setting up doctor appointment search and filters:', error);
+        }
+    }
     
     // Load doctor-specific data
     async function loadDoctorData() {
@@ -2719,14 +2770,43 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardAppsList.innerHTML = '<tr><td colspan="3" class="text-center">No appointments today</td></tr>';
         }
         
-        // All appointments
+        // Get filter values
+        const searchQuery = document.getElementById('doctorAppointmentSearch')?.value?.toLowerCase() || '';
+        const statusFilter = document.getElementById('doctorAppointmentStatusFilter')?.value || 'all';
+        const dateFilter = document.getElementById('doctorAppointmentDateFilter')?.value || '';
+        
+        // All appointments with filters
         const appsTable = document.getElementById('doctorAppointmentsTable');
         appsTable.innerHTML = '';
         
         if (appointments.length > 0) {
+            // Apply filters
+            let filteredAppointments = [...appointments];
+            
+            // Filter by patient name if search query exists
+            if (searchQuery) {
+                filteredAppointments = filteredAppointments.filter(app => 
+                    app.patientName.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            // Filter by status if not "all"
+            if (statusFilter !== 'all') {
+                filteredAppointments = filteredAppointments.filter(app => 
+                    app.status === statusFilter
+                );
+            }
+            
+            // Filter by date if date filter is set
+            if (dateFilter) {
+                filteredAppointments = filteredAppointments.filter(app => 
+                    app.date === dateFilter
+                );
+            }
+            
             // Sort by status first: In Progress, Scheduled, Completed
             // Then by date, newest first
-            const sortedAppointments = [...appointments].sort((a, b) => {
+            const sortedAppointments = filteredAppointments.sort((a, b) => {
                 // First sort by status
                 const statusDiff = statusOrder[a.status] - statusOrder[b.status];
                 if (statusDiff !== 0) return statusDiff;
