@@ -15,7 +15,7 @@ export const doctors = pgTable('doctors', {
   email: text('email'),
   availability: text('availability'),
   verified: boolean('verified').default(false),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -31,7 +31,7 @@ export const patients = pgTable('patients', {
   contact: text('contact'),
   email: text('email'),
   medicalHistory: text('medical_history'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -44,7 +44,7 @@ export const receptionists = pgTable('receptionists', {
   contact: text('contact'),
   email: text('email'),
   department: text('department'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -57,7 +57,7 @@ export const labTechnicians = pgTable('lab_technicians', {
   specialization: text('specialization'),
   contact: text('contact'),
   email: text('email'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -72,7 +72,7 @@ export const pendingDoctors = pgTable('pending_doctors', {
   contact: text('contact'),
   email: text('email'),
   availability: text('availability'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -85,7 +85,7 @@ export const pendingReceptionists = pgTable('pending_receptionists', {
   contact: text('contact'),
   email: text('email'),
   department: text('department'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -98,7 +98,7 @@ export const pendingLabTechnicians = pgTable('pending_lab_technicians', {
   specialization: text('specialization'),
   contact: text('contact'),
   email: text('email'),
-  avatarUrl: text('avatar_url'),
+  avatar_Url: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
