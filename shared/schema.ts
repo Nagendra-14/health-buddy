@@ -44,7 +44,7 @@ export const receptionists = pgTable('receptionists', {
   contact: text('contact'),
   email: text('email'),
   department: text('department'),
-  avatar_url: text('avatar_url'),
+  avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -57,7 +57,7 @@ export const labTechnicians = pgTable('lab_technicians', {
   specialization: text('specialization'),
   contact: text('contact'),
   email: text('email'),
-  avatar_url: text('avatar_url'),
+  avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
