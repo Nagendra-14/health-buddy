@@ -1,0 +1,3 @@
+git add shared/schema.ts
+git commit -m "Fix schema field names for consistency with database"
+git push
