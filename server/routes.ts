@@ -22,6 +22,7 @@ import { pendingReceptionists, pendingLabTechnicians, receptionists, labTechnici
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize database and load data
+    // Initialize database and load data
   try {
     // Check if tables exist and create them if needed
     await db.query.doctors.findMany();
@@ -29,7 +30,203 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error) {
     console.error('Error checking database tables, they may need to be created:', error);
     console.log('Running db:push to create tables...');
-    // We'll handle this in the UI by showing a message
+    
+    // Automatically create tables if they don't exist
+    try {
+      // Create doctors table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS doctors (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          specialty TEXT NOT NULL,
+          license TEXT,
+          contact TEXT,
+          email TEXT,
+          availability TEXT,
+          verified BOOLEAN DEFAULT FALSE,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create patients table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS patients (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          doctor_id TEXT REFERENCES doctors(id),
+          age INTEGER,
+          gender TEXT,
+          contact TEXT,
+          email TEXT,
+          medical_history TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create receptionists table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS receptionists (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          contact TEXT,
+          email TEXT,
+          department TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create lab_technicians table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS lab_technicians (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          specialization TEXT,
+          contact TEXT,
+          email TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create pending_doctors table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS pending_doctors (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          specialty TEXT NOT NULL,
+          license TEXT,
+          contact TEXT,
+          email TEXT,
+          availability TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create pending_receptionists table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS pending_receptionists (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          contact TEXT,
+          email TEXT,
+          department TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create pending_lab_technicians table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS pending_lab_technicians (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          specialization TEXT,
+          contact TEXT,
+          email TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create appointments table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS appointments (
+          id TEXT PRIMARY KEY,
+          patient_id TEXT NOT NULL REFERENCES patients(id),
+          patient_name TEXT NOT NULL,
+          doctor_id TEXT NOT NULL REFERENCES doctors(id),
+          doctor_name TEXT NOT NULL,
+          date TEXT NOT NULL,
+          time TEXT NOT NULL,
+          purpose TEXT NOT NULL,
+          status TEXT NOT NULL,
+          notes TEXT,
+          avatar TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create tests table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS tests (
+          id TEXT PRIMARY KEY,
+          patient_id TEXT NOT NULL REFERENCES patients(id),
+          patient_name TEXT NOT NULL,
+          doctor_id TEXT NOT NULL REFERENCES doctors(id),
+          doctor_name TEXT NOT NULL,
+          test_type TEXT NOT NULL,
+          test_date TEXT NOT NULL,
+          results TEXT,
+          status TEXT NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create prescriptions table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS prescriptions (
+          id TEXT PRIMARY KEY,
+          patient_id TEXT NOT NULL REFERENCES patients(id),
+          patient_name TEXT NOT NULL,
+          doctor_id TEXT NOT NULL REFERENCES doctors(id),
+          doctor_name TEXT NOT NULL,
+          date TEXT NOT NULL,
+          diagnosis TEXT NOT NULL,
+          medications TEXT NOT NULL,
+          instructions TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create reports table
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS reports (
+          id TEXT PRIMARY KEY,
+          patient_id TEXT NOT NULL REFERENCES patients(id),
+          patient_name TEXT NOT NULL,
+          doctor_id TEXT NOT NULL REFERENCES doctors(id),
+          doctor_name TEXT NOT NULL,
+          date TEXT NOT NULL,
+          category TEXT NOT NULL,
+          title TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // Create user_visits table for analytics
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS user_visits (
+          id SERIAL PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+      `);
+      
+      console.log('Database tables created successfully');
+    } catch (createError) {
+      console.error('Error creating database tables:', createError);
+      // We'll continue and let the app try to operate
+    }
   }
 
   // Serve static HTML, CSS, and JS files for Health Buddy
