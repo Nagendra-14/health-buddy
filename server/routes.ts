@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email,
         availability,
         verified: false,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+        avatar_Url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
       };
       
       // Add to pending doctors list
@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender,
         medicalHistory: medicalHistory || '',
         doctorId: doctorId || null,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+        avatar_Url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
       };
       
       // Add to patients list
@@ -443,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         department,
         contact,
         email,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+        avatar_Url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
       };
       
       // Add to pending receptionists list
@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         specialization,
         contact,
         email,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+        avatar_Url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
       };
       
       // Add to pending lab technicians list
