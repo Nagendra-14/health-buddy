@@ -583,10 +583,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const userType = document.getElementById('userType').value;
         
         // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
-        submitBtn.disabled = true;
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const loginBtn = document.getElementById("loginBtn");
+  const btnText = document.getElementById("btnText");
+
+  loginBtn.disabled = true;
+  btnText.innerHTML = `<span class="spinner"></span> Signing In...`;
+
+  // Proceed with your login logic (fetch/ajax or redirection)
+});
         
         try {
             // Authenticate user via API
