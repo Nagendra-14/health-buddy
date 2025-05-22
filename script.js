@@ -1243,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const swipeDistance = Math.abs(touchEndX - touchStartX);
         
         // If swipe is significant enough (to avoid small finger movements)
-        if (swipeDistance > 50) {
+        if (swipeDistance > 20) {
             // Right to left swipe (close sidebar)
             if (touchEndX < touchStartX && sidebar.classList.contains('active')) {
                 sidebar.classList.remove('active');
