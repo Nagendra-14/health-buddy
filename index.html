@@ -1518,5 +1518,16 @@
             }, 1000);
         });
     </script>
+    <script>
+  window.addEventListener("DOMContentLoaded", function () {
+    const loginBtn = document.getElementById("loginBtn");
+    const btnText = document.getElementById("btnText");
+
+    if (loginBtn && btnText) {
+      loginBtn.disabled = false;
+      btnText.textContent = "Sign In";  // reset from spinner
+    }
+  });
+</script>
 </body>
 </html>
